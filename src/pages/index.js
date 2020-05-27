@@ -2,12 +2,12 @@ import React from "react"
 
 import Layout from "../components/layout"
 import SEO from "../components/seo"
+import Dm from "../components/dm"
 
 const IndexPage = () => (
   <Layout>
     <SEO title="Contact Me" />
-    <h1>Howdy</h1>
-    <p>This is going to be a way to contact me</p>
+    <Dm />
   </Layout>
 )
 

@@ -3,7 +3,18 @@ import { useForm } from "react-hook-form"
 
 function Dm(){
   const { register, handleSubmit, errors } = useForm();
-  const onSubmit = data => console.log(data);
+  const onSubmit = data => {
+    console.log(data);
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({text: data.fullname + ": " + data.message})
+    }
+    fetch("https://vbc0gawu44.execute-api.us-east-1.amazonaws.com/prod/dm", requestOptions)
+      .then((res) => console.log(res))
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

@@ -10,39 +10,43 @@ function Dm(){
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({text: data.fullname + ": " + data.message})
+      body: JSON.stringify({text: data.fullname + " (" + data.contact + "): " + data.message})
     }
     fetch("https://vbc0gawu44.execute-api.us-east-1.amazonaws.com/prod/dm", requestOptions)
       .then((res) => console.log(res))
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form class="basic-grey" onSubmit={handleSubmit(onSubmit)}>
+      <h1> Contact Paul
+        <span>Would be great to get in touch!</span>
+      </h1>
       <label>
-      Fullname:
+      <span>Fullname :</span>
       <input name="fullname"
         ref={register({ required: true, pattern: /^[a-zA-Z\s]*$/ })}
-        placeholder="actual name" />
+        placeholder="Actual Name" />
       {errors.fullname && <span>This field is required</span>}
       </label>
-      <br/>
       <label>
-      Email:
+      <span>Email: </span>
       <input name="contact"
         ref={register({ required: true })}
-        placeholder="way to respond" />
+        placeholder="Where to respond" />
       {errors.contact && <span>This field is required</span>}
       </label>
-      <br/>
       <label>
-      Message:
-      <input name="message"
-        ref={register({ required: true, minLength: 5, maxLength: 50 })}
-        placeholder="keep it short and sweet" />
+      <span>Message: </span>
+        <textarea name="message"
+        ref={register({ required: true, minLength: 5, maxLength: 180 })}
+        placeholder="There is a character limit, we can talk more once we connect" />
       {errors.message && <span>This field is required</span>}
       </label>
-       <br/>
-      <input type="submit" />
+      <label>
+        <span></span>
+        <input type="submit" class="button" value="Send Message"/>
+      </label>
+
     </form>
   );
 }

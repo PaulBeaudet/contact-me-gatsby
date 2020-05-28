@@ -6,7 +6,7 @@ import Dm from "../components/dm"
 
 const IndexPage = () => (
   <Layout>
-    <SEO title="Contact Me" />
+    <SEO title="Paul Beaudet" />
     <Dm />
   </Layout>
 )

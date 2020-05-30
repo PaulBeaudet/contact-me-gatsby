@@ -25,4 +25,4 @@ functions:
                 method: POST
                 cors:
                     origins: 
-                        - '*'
+                        - 'https://contactpaul.deabute.com'

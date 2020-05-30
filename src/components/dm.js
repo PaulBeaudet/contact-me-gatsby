@@ -18,6 +18,7 @@ function Dm(){
           console.log("thanks for the message")
           reset()
           setSubmited([true])
+          setTimeout(() => {window.location = "https://paul.deabute.com"}, 7000)
         }
       })
   }

@@ -4,7 +4,7 @@ import PropTypes from "prop-types"
 
 import "./layout.css"
 
-const Layout = ({ children }) => { 
+const Layout = ({ children }) => {
   return (
     <>
       <div

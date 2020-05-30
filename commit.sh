@@ -11,7 +11,7 @@ rsync -rac \
 $HOME/Dropbox/programs/react/contact-me-gatsby
 # End rsync ... wish passing --exclude-from= .gitignore worked
 
-if [ '$1' ]; then
+if [ "$1" ]; then
     git add .
-    git commit -m '$1'
+    git commit -m "$1"
 fi

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useForm } from "react-hook-form"
 
 function Dm(){
-  let [submited] = useState(false)
+  let [submited, setSubmited] = useState(false)
   const { register, handleSubmit, errors, reset} = useForm();
   const onSubmit = data => {
     const requestOptions = {
@@ -17,46 +17,57 @@ function Dm(){
         if(res.status === 200){
           console.log("thanks for the message")
           reset()
-          submited = true
+          setSubmited([true])
         }
       })
   }
-  let view = <form className="basic-grey" onSubmit={handleSubmit(onSubmit)}>
+
+  return (
+  <>
+  {!submited && (
+  <form className="basic-grey" onSubmit={handleSubmit(onSubmit)}>
     <h1> Contact Paul
-      <span>Would be great to get in touch!</span>
+      <span>Maybe we can connect</span>
     </h1>
     <label>
     <span>Fullname :</span>
     <input name="fullname"
       ref={register({ required: true, pattern: /^[a-zA-Z\s]*$/ })}
       placeholder="Actual Name" />
-    {errors.fullname && <span>This field is required</span>}
     </label>
+    {errors.fullname && (
+      <span>Fullname people would know you by is required</span>
+    )}
     <label>
     <span>Email: </span>
     <input name="contact"
-      ref={register({ required: true })}
+      ref={register({ required: true, pattern: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ })}
       placeholder="Where to respond" />
-    {errors.contact && <span>This field is required</span>}
     </label>
+    {errors.contact && (<span>Valid email is required to respond </span>)}
     <label>
     <span>Message: </span>
       <textarea name="message"
       ref={register({ required: true, minLength: 5, maxLength: 180 })}
-      placeholder="There is a character limit, we can talk more once we connect" />
-    {errors.message && <span>This field is required</span>}
+      placeholder="There is a character limit, we can talk more once we connect" />  
     </label>
+    {errors.message && errors.message.type ==="required" && 
+      (<span>A message would be helpful</span>)
+    }
+    {errors.message && errors.message.type ==="maxLength" && 
+      (<span>Too many characters, please keep it short and sweet</span>)
+    }
+    {errors.message && errors.message.type ==="minLength" &&
+      (<span>Its okay to send more than a hi</span>)
+    }
     <label>
-      <span></span>
       <input type="submit" className="button" value="Send Message"/>
     </label>
+    <br/>
   </form>
-  if(submited){
-    view = <h1>Thanks for sending me a message!</h1>
-  }
-
-  return (
-    view
+  )}
+  {submited && (<p>Thanks for the message</p>)}
+  </>
   );
 }
 

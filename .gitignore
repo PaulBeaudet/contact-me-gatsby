@@ -70,4 +70,5 @@ yarn-error.log
 
 deploy*
 .serverless
-commit.sh
+*.sh
+.netlify

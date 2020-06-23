@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useForm } from "react-hook-form"
 
 function Dm(){
-  let [submited, setSubmited] = useState(false)
+  let [submitted, setSubmitted] = useState(false)
   const { register, handleSubmit, errors, reset} = useForm();
   const onSubmit = data => {
     const requestOptions = {
@@ -17,7 +17,7 @@ function Dm(){
         if(res.status === 200){
           console.log("thanks for the message")
           reset()
-          setSubmited([true])
+          setSubmitted([true])
           setTimeout(() => {window.location = "https://paul.deabute.com"}, 7000)
         }
       })
@@ -25,13 +25,13 @@ function Dm(){
 
   return (
   <>
-  {!submited && (
+  {!submitted && (
   <form className="basic-grey" onSubmit={handleSubmit(onSubmit)}>
     <h1> Contact Paul
       <span>Maybe we can connect</span>
     </h1>
     <label>
-    <span>Fullname :</span>
+    <span>Full name :</span>
     <input name="fullname"
       ref={register({ required: true, pattern: /^[a-zA-Z\s]*$/ })}
       placeholder="Actual Name" />
@@ -67,7 +67,7 @@ function Dm(){
     <br/>
   </form>
   )}
-  {submited && (<p>Thanks for the message</p>)}
+  {submitted && (<p>Thanks for the message</p>)}
   </>
   );
 }

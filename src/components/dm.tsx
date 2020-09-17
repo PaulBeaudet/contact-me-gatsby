@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useStaticQuery, graphql } from 'gatsby';
+import { MetaQuery } from '../interface';
 
-function Dm() {
-  let [submitted, setSubmitted] = useState(false);
+const Dm = () => {
+  let [submitted, setSubmitted] = useState<boolean>(false);
   const { register, handleSubmit, errors, reset } = useForm();
-  const { site } = useStaticQuery(graphql`
+  const { site }: MetaQuery = useStaticQuery(graphql`
     query {
       site {
         siteMetadata {
@@ -31,7 +32,7 @@ function Dm() {
       if (res.status === 200) {
         console.log('thanks for the message');
         reset();
-        setSubmitted([true]);
+        setSubmitted(true);
         setTimeout(() => {
           window.location = contact_redirect;
         }, 7000);
@@ -96,6 +97,6 @@ function Dm() {
       {submitted && <p>Thanks for the message</p>}
     </>
   );
-}
+};
 
 export default Dm;

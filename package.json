@@ -2,7 +2,7 @@
   "name": "contact-me",
   "private": true,
   "description": "Website for contacting me",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
     "gatsby": "^2.21.37",

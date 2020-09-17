@@ -55,7 +55,7 @@ function Dm() {
               name="contact"
               ref={register({
                 required: true,
-                pattern: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+                pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
               })}
               placeholder="Where to respond"
             />

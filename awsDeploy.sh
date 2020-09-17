@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 . ./personal.sh # Load private configuration
 
 # Build 

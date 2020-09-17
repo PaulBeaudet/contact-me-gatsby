@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useStaticQuery, graphql } from 'gatsby';
 
 function Dm() {
   let [submitted, setSubmitted] = useState(false);
   const { register, handleSubmit, errors, reset } = useForm();
+  const { site } = useStaticQuery(graphql`
+    query {
+      site {
+        siteMetadata {
+          contact_api
+          contact_redirect
+          author
+        }
+      }
+    }
+  `);
+  const { contact_api, contact_redirect, author } = site.siteMetadata;
   const onSubmit = data => {
     const requestOptions = {
       method: 'POST',
@@ -14,16 +27,13 @@ function Dm() {
         text: data.fullname + ' (' + data.contact + '): ' + data.message,
       }),
     };
-    fetch(
-      'https://vbc0gawu44.execute-api.us-east-1.amazonaws.com/prod/dm',
-      requestOptions
-    ).then(res => {
+    fetch(contact_api, requestOptions).then(res => {
       if (res.status === 200) {
         console.log('thanks for the message');
         reset();
         setSubmitted([true]);
         setTimeout(() => {
-          window.location = 'https://paul.deabute.com';
+          window.location = contact_redirect;
         }, 7000);
       }
     });
@@ -34,8 +44,7 @@ function Dm() {
       {!submitted && (
         <form className="basic-grey" onSubmit={handleSubmit(onSubmit)}>
           <h1>
-            {' '}
-            Contact Paul
+            {` Contact ${author}`}
             <span>Maybe we can connect</span>
           </h1>
           <label>

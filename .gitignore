@@ -68,7 +68,6 @@ yarn-error.log
 # Yarn Integrity file
 .yarn-integrity
 
-deploy*
 .serverless
-*.sh
 .netlify
+personal.sh

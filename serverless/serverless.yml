@@ -1,29 +1,28 @@
 service: contactRelayMessage
 
 package:
-    exclude:
-        - ./**
-    include:
-        - ./relay.js
+  exclude:
+    - ./**
+  include:
+    - ./relay.js
 
 provider:
-    name: aws
-    stage: prod
-    runtime: nodejs10.x
-    region: us-east-1
-    timeout: 3
-    memorySize: 256
-    environment:
-        DM_WH: ${env:DM_WH}
+  name: aws
+  stage: prod
+  runtime: nodejs12.x
+  region: us-east-1
+  timeout: 3
+  memorySize: 256
+  environment:
+    DM_WH: ${env:DM_WH}
 
 functions:
-    slack:
-        handler: relay.slack
-        events:
-            - http:
-                path: dm
-                method: POST
-                cors:
-                    origins: 
-                        - 'https://contactpaul.deabute.com'
-                        - 'https://contactpaul.netlify.app'
+  slack:
+    handler: relay.slack
+    events:
+      - http:
+          path: dm
+          method: POST
+          cors:
+            origins:
+              - "https://${env:BUCKET_NAME}"

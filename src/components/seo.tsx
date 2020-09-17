@@ -5,11 +5,10 @@ import { useStaticQuery, graphql } from 'gatsby';
 interface props {
   description: string;
   lang: string;
-  meta: string;
   title: string;
 }
 
-const SEO: React.FC<props> = ({ description, lang, meta, title }) => {
+const SEO: React.FC<props> = ({ description, lang, title }) => {
   const { site } = useStaticQuery(
     graphql`
       query {
@@ -66,7 +65,7 @@ const SEO: React.FC<props> = ({ description, lang, meta, title }) => {
           name: `twitter:description`,
           content: metaDescription,
         },
-      ].concat(meta)}
+      ]}
     />
   );
 };

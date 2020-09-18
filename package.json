@@ -5,7 +5,7 @@
   "version": "0.1.5",
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
-    "gatsby": "^2.21.37",
+    "gatsby": "^2.24.63",
     "gatsby-cli": "^2.12.50",
     "gatsby-plugin-manifest": "^2.4.5",
     "gatsby-plugin-offline": "^3.2.3",

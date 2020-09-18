@@ -2,13 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import { useStaticQuery, graphql } from 'gatsby';
 
-interface props {
-  description: string;
-  lang: string;
-  title: string;
-}
-
-const SEO: React.FC<props> = ({ description, lang, title }) => {
+const SEO: React.FC = () => {
   const { site } = useStaticQuery(
     graphql`
       query {
@@ -16,22 +10,18 @@ const SEO: React.FC<props> = ({ description, lang, title }) => {
           siteMetadata {
             title
             description
-            author
           }
         }
       }
     `
   );
 
-  const metaDescription = description || site.siteMetadata.description;
+  const { metaDescription, title } = site.siteMetadata;
 
   return (
     <Helmet
-      htmlAttributes={{
-        lang,
-      }}
       title={title}
-      titleTemplate={`%s | ${site.siteMetadata.title}`}
+      titleTemplate={`%s | ${title}`}
       meta={[
         {
           name: `description`,
@@ -48,22 +38,6 @@ const SEO: React.FC<props> = ({ description, lang, title }) => {
         {
           property: `og:type`,
           content: `website`,
-        },
-        {
-          name: `twitter:card`,
-          content: `summary`,
-        },
-        {
-          name: `twitter:creator`,
-          content: site.siteMetadata.author,
-        },
-        {
-          name: `twitter:title`,
-          content: title,
-        },
-        {
-          name: `twitter:description`,
-          content: metaDescription,
         },
       ]}
     />

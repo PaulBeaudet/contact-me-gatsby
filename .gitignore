@@ -71,3 +71,4 @@ yarn-error.log
 .serverless
 .netlify
 personal.sh
+.vscode

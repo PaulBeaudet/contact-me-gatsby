@@ -1,41 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useForm } from 'react-hook-form';
-import { useStaticQuery, graphql } from 'gatsby';
-import { MetaQuery } from '../interface';
+import { GlobalUserContext } from '../context/GlobalState';
 
-const Dm = () => {
-  let [submitted, setSubmitted] = useState<boolean>(false);
+interface props {
+  contactApi: string;
+}
+
+const Dm: React.FC<props> = ({ contactApi }) => {
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const { state, dispatch } = useContext(GlobalUserContext);
   const { register, handleSubmit, errors, reset } = useForm();
-  const { site }: MetaQuery = useStaticQuery(graphql`
-    query {
-      site {
-        siteMetadata {
-          contact_api
-          contact_redirect
-          author
-        }
-      }
-    }
-  `);
-  const { contact_api, contact_redirect, author } = site.siteMetadata;
+
+  const { email, displayName, loggedIn } = state;
   const onSubmit = data => {
+    const { fullname, contact, message } = data;
+    const msg = `${fullname} (${contact}): ${message}`;
+    console.log(`sending: ${msg}`);
     const requestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        text: data.fullname + ' (' + data.contact + '): ' + data.message,
+        text: msg,
       }),
     };
-    fetch(contact_api, requestOptions).then(res => {
+    fetch(contactApi, requestOptions).then(res => {
       if (res.status === 200) {
-        console.log('thanks for the message');
+        console.log('thanks for the message'); // maybe actually display this
         reset();
         setSubmitted(true);
-        setTimeout(() => {
-          window.location = contact_redirect;
-        }, 7000);
       }
     });
   };
@@ -43,17 +37,21 @@ const Dm = () => {
   return (
     <>
       {!submitted && (
-        <form className="basic-grey" onSubmit={handleSubmit(onSubmit)}>
-          <h1>
-            {` Contact ${author}`}
-            <span>Maybe we can connect</span>
-          </h1>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <label>
             <span>Full name :</span>
             <input
               name="fullname"
               ref={register({ required: true, pattern: /^[a-zA-Z\s]*$/ })}
+              value={displayName}
               placeholder="Actual Name"
+              readOnly={loggedIn}
+              onChange={event => {
+                dispatch({
+                  type: 'CHANGE_TARGET',
+                  payload: { displayName: event.target.value },
+                });
+              }}
             />
           </label>
           {errors.fullname && (
@@ -67,7 +65,15 @@ const Dm = () => {
                 required: true,
                 pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
               })}
+              value={email}
               placeholder="Where to respond"
+              readOnly={loggedIn}
+              onChange={event => {
+                dispatch({
+                  type: 'CHANGE_TARGET',
+                  payload: { email: event.target.value },
+                });
+              }}
             />
           </label>
           {errors.contact && <span>Valid email is required to respond </span>}

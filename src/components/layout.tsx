@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './layout.css';
+import '../styles/global.css';
 
 interface props {
   children: any;

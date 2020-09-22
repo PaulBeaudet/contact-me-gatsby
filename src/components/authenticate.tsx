@@ -1,22 +1,41 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { GlobalUserContext } from '../context/GlobalState';
 import { useForm } from 'react-hook-form';
-import { loadStorage } from '../api/LocalStorage';
+import { wsSend, wsOn } from '../api/WebSocket';
+import { loadStorage, noStorage } from '../api/LocalStorage';
 
 const Authenticate = () => {
   const [showAuth, setShowAuth] = useState(false);
+  const [lStorage, setLStorage] = useState(noStorage);
   const { state, dispatch } = useContext(GlobalUserContext);
   const { register, handleSubmit, errors, reset } = useForm();
 
+  useEffect(() => {
+    setLStorage(loadStorage());
+    wsOn('loggedin', req => {
+      if (req.token && req.oid) {
+        lStorage.write({ ...req });
+        dispatch({
+          type: 'SIGN_IN',
+          payload: {
+            loggedIn: true,
+            ...req,
+          },
+        });
+      } else {
+        console.log('Oops something when wrong');
+      }
+    });
+    wsOn('reject', console.log);
+    wsOn('fail', console.log);
+  }, []);
+
   const logInAction = data => {
-    console.log(data);
     const { email, password } = data;
-    dispatch({
-      type: 'SIGN_IN',
-      payload: {
-        loggedIn: true,
-        email,
-      },
+    wsSend('login', {
+      username: email,
+      password,
+      oid: lStorage.read('oid'),
     });
     reset();
   };
@@ -49,11 +68,11 @@ const Authenticate = () => {
             <label>
               <span>Email: </span>
               <input
-                type="email"
+                // type="email"
                 name="email"
                 ref={register({
                   required: true,
-                  pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+                  // pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
                 })}
                 placeholder="email"
               />

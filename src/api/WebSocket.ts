@@ -30,11 +30,11 @@ const handlers = [
   },
 ];
 
-export const on = (action: string, func: any) => {
+export const wsOn = (action: string, func: any) => {
   handlers.push({ action, func });
 };
 
-export const incoming = (event: any) => {
+const incoming = (event: any) => {
   let req = { action: null };
   // if error we don't care there is a default object
   try {
@@ -42,28 +42,30 @@ export const incoming = (event: any) => {
   } catch (error) {
     console.log(error);
   }
-  handlers.find(handler => {
-    if (req.action === handler.action) {
-      handler.func(req);
-      return;
-    }
-  });
-  console.log('no handler ' + event.data);
+  if (
+    !handlers.find(handler => {
+      if (req.action === handler.action) {
+        // maybe delete action key here
+        handler.func(req);
+        return true;
+      }
+    })
+  ) {
+    // given no handler found in array
+    console.log('no handler ' + event.data);
+  }
 };
 
-export const send = (msg: string) => {
+export const wsSend = (action: string, json: any) => {
+  json = json ? json : {};
+  json.action = action;
+  let msg = '{"action":"error","error":"failed stringify"}';
   try {
-    msg = JSON.stringify(msg);
+    msg = JSON.stringify(json);
   } catch (error) {
-    msg = '{"action":"error","error":"failed stringify"}';
+    console.log(error);
   }
   init(() => {
     instance.send(msg);
   });
-};
-
-export const msg = (action: string, json: any) => {
-  json = json ? json : {};
-  json.action = action;
-  send(json);
 };

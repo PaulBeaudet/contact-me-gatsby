@@ -5,6 +5,7 @@
   "version": "0.1.8",
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
+    "express": "^4.17.1",
     "firebase": "^7.21.0",
     "firebaseui": "^4.6.1",
     "gatsby": "^2.24.63",
@@ -16,11 +17,13 @@
     "gatsby-source-filesystem": "^2.3.4",
     "gatsby-transformer-sharp": "^2.5.2",
     "https": "^1.0.0",
+    "js-yaml": "^3.14.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-firebaseui": "^4.1.0",
     "react-helmet": "^6.0.0",
-    "react-hook-form": "^5.7.2"
+    "react-hook-form": "^5.7.2",
+    "ws": "^7.3.1"
   },
   "devDependencies": {
     "@types/node": "^14.11.1",

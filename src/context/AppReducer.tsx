@@ -1,4 +1,4 @@
-import { reducerActionType, GlobalContextType } from '../interface';
+import { reducerActionType, GlobalContextType } from '../interfaces/global';
 import { userState } from './GlobalState';
 
 export default (state: GlobalContextType, action: reducerActionType) => {

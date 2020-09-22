@@ -1,5 +1,5 @@
 import React, { createContext, useReducer } from 'react';
-import { GlobalContextType } from '../interface';
+import { GlobalContextType } from '../interfaces/global';
 import AppReducer from './AppReducer';
 
 export const userState: GlobalContextType = {

@@ -1,6 +1,6 @@
-const request = require('https').request;
+const { request } = require('https');
 
-var slack = {
+const slack = {
   send: (msg, webhook) => {
     const postData = JSON.stringify({ text: msg });
     const options = {

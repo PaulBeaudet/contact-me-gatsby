@@ -5,15 +5,6 @@ module.exports = {
     author: process.env.SITE_AUTHOR,
     contact_api: process.env.CONTACT_API_URL,
     contact_redirect: process.env.AFTER_CONTACT_REDIRECT,
-    firebaseConfig: {
-      apiKey: process.env.FIREBASE_KEY,
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-      databaseURL: process.env.DATABASE_URL,
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.STORAGE_BUCKET,
-      messagingSenderId: process.env.MESSAGING_SENDER_ID,
-      appId: process.env.APP_ID,
-    },
   },
   plugins: [
     `gatsby-plugin-react-helmet`,

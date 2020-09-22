@@ -1,9 +1,10 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { useStaticQuery, graphql } from 'gatsby';
+import { MetaQuery } from '../interfaces/global';
 
 const SEO: React.FC = () => {
-  const { site } = useStaticQuery(
+  const { site }: MetaQuery = useStaticQuery(
     graphql`
       query {
         site {
@@ -16,7 +17,7 @@ const SEO: React.FC = () => {
     `
   );
 
-  const { metaDescription, title } = site.siteMetadata;
+  const { description, title } = site.siteMetadata;
 
   return (
     <Helmet
@@ -25,7 +26,7 @@ const SEO: React.FC = () => {
       meta={[
         {
           name: `description`,
-          content: metaDescription,
+          content: description,
         },
         {
           property: `og:title`,
@@ -33,7 +34,7 @@ const SEO: React.FC = () => {
         },
         {
           property: `og:description`,
-          content: metaDescription,
+          content: description,
         },
         {
           property: `og:type`,

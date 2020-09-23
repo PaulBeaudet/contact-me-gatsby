@@ -5,6 +5,7 @@
   "version": "0.1.10",
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
+    "aws-sdk": "^2.758.0",
     "express": "^4.17.1",
     "firebase": "^7.21.0",
     "firebaseui": "^4.6.1",
@@ -18,6 +19,7 @@
     "gatsby-transformer-sharp": "^2.5.2",
     "https": "^1.0.0",
     "js-yaml": "^3.14.0",
+    "mongodb": "^3.6.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-firebaseui": "^4.1.0",

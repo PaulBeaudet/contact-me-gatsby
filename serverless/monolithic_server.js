@@ -5,40 +5,66 @@ const path = require('path');
 const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
+const Responses = require('./apiGateway/API_Response');
+
+// placeholder methods can be over written by serverless forFunctions
+const gatewayWs = {
+  connect: async event => {
+    console.log(event);
+    const { connectionId, sendFunc } = event.requestContext;
+    wsConnections.push({
+      connectionId,
+      sendFunc,
+    });
+    return Responses._200({ message: 'connected' });
+  },
+  disconnect: async event => {
+    console.log(event);
+    return Responses._200({ message: 'disconnected' });
+  },
+  default: async event => {
+    console.log(event);
+    return Responses._200({ message: 'yup' });
+  },
+};
+
+// pretty sure new mongo.ObjectID() does the same thing
+const createOid = () => {
+  const increment = Math.floor(Math.random() * 16777216).toString(16);
+  const pid = Math.floor(Math.random() * 65536).toString(16);
+  const machine = Math.floor(Math.random() * 16777216).toString(16);
+  const timestamp = Math.floor(new Date().valueOf() / 1000).toString(16);
+  return (
+    '00000000'.substr(0, 8 - timestamp.length) +
+    timestamp +
+    '000000'.substr(0, 6 - machine.length) +
+    machine +
+    '0000'.substr(0, 4 - pid.length) +
+    pid +
+    '000000'.substr(0, 6 - increment.length) +
+    increment
+  );
+};
+
+// use an in memory array when no db is available
+let wsConnections = [];
 
 const socket = {
-  server: null,
-  connections: [],
-  createOid: () => {
-    const increment = Math.floor(Math.random() * 16777216).toString(16);
-    const pid = Math.floor(Math.random() * 65536).toString(16);
-    const machine = Math.floor(Math.random() * 16777216).toString(16);
-    const timestamp = Math.floor(new Date().valueOf() / 1000).toString(16);
-    return (
-      '00000000'.substr(0, 8 - timestamp.length) +
-      timestamp +
-      '000000'.substr(0, 6 - machine.length) +
-      machine +
-      '0000'.substr(0, 4 - pid.length) +
-      pid +
-      '000000'.substr(0, 6 - increment.length) +
-      increment
-    );
-  },
   init: server => {
-    socket.server = new WebSocket.Server({
+    new WebSocket.Server({
       server,
       autoAcceptConnections: false,
-    });
-    socket.server.on('connection', ws => {
-      // handle incoming request
-      ws.on('message', message => {
-        const connectionId = socket.createOid();
-        const sendFunc = socket.send(ws);
-        socket.connections.push({
+    }).on('connection', ws => {
+      const connectionId = createOid();
+      const sendFunc = socket.send(ws);
+      gatewayWs.connect({
+        requestContext: {
           connectionId,
           sendFunc,
-        });
+        },
+      });
+      // handle incoming request
+      ws.on('message', message => {
         socket.incoming(message, sendFunc, connectionId);
       });
     });
@@ -68,9 +94,9 @@ const socket = {
       console.log(error);
     }
     console.log('response from server ' + msg);
-    for (let i = 0; i < socket.connections.length; i++) {
-      if (socket.connections[i].connectionId === oid) {
-        const sent = socket.connections[i].sendFunc(msgObj);
+    for (let i = 0; i < wsConnections.length; i++) {
+      if (wsConnections[i].connectionId === oid) {
+        const sent = wsConnections[i].sendFunc(msgObj);
         return sent ? true : false;
       }
     }
@@ -158,30 +184,45 @@ const serverless = {
       onFinish(yaml.safeLoad(data));
     });
   },
-  forFunctions: (socketOn, httpOn, router) => {
+  forFunctions: router => {
     return config => {
-      if (config.functions) {
-        for (let key in config.functions) {
-          const handler = config.functions[key].handler.split('.');
-          const funcName = handler[1];
-          const mod = require(path.join(__dirname, handler[0]));
-          if ('websocket' in config.functions[key].events[0]) {
-            socketOn(
-              config.functions[key].events[0].websocket.route,
-              mod[funcName]
-            );
-          } else if ('http' in config.functions[key].events[0]) {
-            httpOn(
-              config.functions[key].events[0].http.path,
-              mod[funcName],
-              config.functions[key].events[0].http.method.toLowerCase()
-            );
-          }
-        }
-        api.endPointSetup(router);
-      } else {
-        console.log('not the serverless we are looking for or the one we need');
+      // validation exception
+      if (!config.functions) {
+        console.error('no functions');
+        return;
       }
+      // for every function entry in sls config file
+      Object.values(config.functions).forEach(entry => {
+        const handler = entry.handler.split('.');
+        // NOTE: Assumes function is a top level method on handler
+        const funcName = handler[1];
+        let mod = null;
+        try {
+          mod = require(path.join(__dirname, handler[0]));
+        } catch (error) {
+          console.error(error);
+        }
+        if ('websocket' in entry.events[0]) {
+          const route = entry.events[0].websocket.route;
+          // hook default apiGateway routes into server
+          if (route === '$connect') {
+            gatewayWs.connect = mod[funcName];
+          } else if (route === '$disconnect') {
+            gatewayWs.disconnect = mod[funcName];
+          } else if (route === '$default') {
+            gatewayWs.default = mod[funcName];
+          } else {
+            socket.on(route, mod[funcName]);
+          }
+        } else if ('http' in entry.events[0]) {
+          api.on(
+            entry.events[0].http.path,
+            mod[funcName],
+            entry.events[0].http.method.toLowerCase()
+          );
+        }
+      });
+      api.endPointSetup(router);
     };
   },
 };
@@ -194,7 +235,7 @@ const serve = () => {
     res.sendFile(path.join(__dirname + '/../public/index.html'));
   });
   // set up api event handlers
-  serverless.read(serverless.forFunctions(socket.on, api.on, router));
+  serverless.read(serverless.forFunctions(router));
   app.use(router);
   const web_server = app.listen(process.env.PORT);
   socket.init(web_server);

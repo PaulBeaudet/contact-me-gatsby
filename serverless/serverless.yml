@@ -5,6 +5,7 @@ package:
     - ./**
   include:
     - ./relay.js
+    - ./apiGateway/DefaultSockets.js
 
 provider:
   name: aws
@@ -17,6 +18,24 @@ provider:
     DM_WH: ${env:DM_WH}
 
 functions:
+  connect:
+    description: 'adds connected users to db'
+    handler: apiGateway/DefaultSockets.connect
+    events:
+      - websocket:
+          route: $connect
+  disconnect:
+    description: 'removes disconnected users from db'
+    handler: apiGateway/DefaultSockets.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  default:
+    description: 'handles unhandled routes'
+    handler: apiGateway/DefaultSockets.default
+    events:
+      - websocket:
+          route: $default
   slack:
     handler: relay.slack
     events:
@@ -25,4 +44,4 @@ functions:
           method: POST
           cors:
             origins:
-              - "https://${env:BUCKET_NAME}"
+              - 'https://${env:BUCKET_NAME}'

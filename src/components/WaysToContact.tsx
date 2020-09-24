@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dm from './dm';
 import Authenticate from './authenticate';
+import { wsOn, wsSend } from '../api/WebSocket';
 
 const WaysToContact = () => {
+  // State of host availability
   const [available, setAvailable] = useState(false);
+
+  // ask and listen for host availability
+  useEffect(() => {
+    wsSend('GET_AVAIL');
+    wsOn('AVAIL', req => {
+      setAvailable(req.avail);
+    });
+  }, []);
 
   return (
     <div className="basic-grey">

@@ -6,29 +6,9 @@ const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
 const Responses = require('./apiGateway/API_Response');
+const { mongo } = require('./dbAbstractions/mongo');
 
-// placeholder methods can be over written by serverless forFunctions
-const gatewayWs = {
-  connect: async event => {
-    console.log(event);
-    const { connectionId, sendFunc } = event.requestContext;
-    wsConnections.push({
-      connectionId,
-      sendFunc,
-    });
-    return Responses._200({ message: 'connected' });
-  },
-  disconnect: async event => {
-    console.log(event);
-    return Responses._200({ message: 'disconnected' });
-  },
-  default: async event => {
-    console.log(event);
-    return Responses._200({ message: 'yup' });
-  },
-};
-
-// pretty sure new mongo.ObjectID() does the same thing
+// similar logic to new mongo.ObjectID() except this just returns a string
 const createOid = () => {
   const increment = Math.floor(Math.random() * 16777216).toString(16);
   const pid = Math.floor(Math.random() * 65536).toString(16);
@@ -49,14 +29,43 @@ const createOid = () => {
 // use an in memory array when no db is available
 let wsConnections = [];
 
+// placeholder methods can be over written by serverless forFunctions
+const gatewayWs = {
+  connect: async event => {
+    console.log(event);
+    const { connectionId, sendFunc } = event.requestContext;
+    wsConnections.push({
+      connectionId,
+      sendFunc,
+    });
+    return Responses._200({ message: 'connected' });
+  },
+  disconnect: async event => {
+    // console.dir(event);
+    // reconstruct connection array without this client's connection
+    const { connectionId } = event.requestContext;
+    wsConnections = wsConnections.filter(
+      connection => connection.connectionId !== connectionId
+    );
+    return Responses._200({ message: 'disconnected' });
+  },
+  default: async event => {
+    // route has yet to be created
+    console.dir(event);
+    return Responses._400({ message: 'nope' });
+  },
+};
+
 const socket = {
   init: server => {
     new WebSocket.Server({
       server,
       autoAcceptConnections: false,
     }).on('connection', ws => {
+      // connection information to hold in memory or persistently
       const connectionId = createOid();
-      const sendFunc = socket.send(ws);
+      const sendFunc = socket.send(ws); // <- this may be tough to store server side
+      // Emulate connect event in api gateway
       gatewayWs.connect({
         requestContext: {
           connectionId,
@@ -208,7 +217,12 @@ const serverless = {
           if (route === '$connect') {
             gatewayWs.connect = mod[funcName];
           } else if (route === '$disconnect') {
-            gatewayWs.disconnect = mod[funcName];
+            // This is not the same as $disconnect which will be
+            // triggered by client without 'beforeunload' listener
+            socket.on('disconnect', mod[funcName]);
+            // NOTE: if in memory connection management is desired
+            // add this "on" event for placeholder in init
+            // then figure how this event could replace it in handler array
           } else if (route === '$default') {
             gatewayWs.default = mod[funcName];
           } else {
@@ -245,3 +259,9 @@ module.exports = serve;
 if (!module.parent) {
   serve();
 } // run server if called stand alone
+
+process.once('SIGUSR2', () => {
+  mongo.close();
+  console.log('nodemon gotta restart em all');
+  process.kill(process.pid, 'SIGUSR2');
+});

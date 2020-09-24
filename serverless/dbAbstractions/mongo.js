@@ -8,12 +8,14 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 const mongo = {
   connect: async (queryFunc, collectionName = 'socketPool') => {
     try {
-      await client.connect();
+      if (!client.isConnected()) {
+        await client.connect();
+      }
       const db = client.db(process.env.DB_NAME);
       const collection = db.collection(collectionName);
       return await queryFunc(collection);
-    } finally {
-      client.close();
+    } catch (error) {
+      console.log(error);
     }
   },
   insertOne: async (doc, collectionName = 'socketPool') => {
@@ -32,6 +34,17 @@ const mongo = {
       }
       return await cursor.forEach(operation);
     });
+  },
+  deleteOne: async (query, collectionName = 'socketPool') => {
+    if (!query) {
+      throw Error('no query');
+    }
+    return await mongo.connect(async collection => {
+      return await collection.deleteOne(query);
+    }, collectionName);
+  },
+  close: () => {
+    client.close().catch(console.log);
   },
 };
 

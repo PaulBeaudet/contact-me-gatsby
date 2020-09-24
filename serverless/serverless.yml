@@ -20,22 +20,28 @@ provider:
 functions:
   connect:
     description: 'adds connected users to db'
-    handler: apiGateway/DefaultSockets.connect
+    handler: api/DefaultSockets.connect
     events:
       - websocket:
           route: $connect
   disconnect:
     description: 'removes disconnected users from db'
-    handler: apiGateway/DefaultSockets.disconnect
+    handler: api/DefaultSockets.disconnect
     events:
       - websocket:
           route: $disconnect
   default:
     description: 'handles unhandled routes'
-    handler: apiGateway/DefaultSockets.default
+    handler: api/DefaultSockets.default
     events:
       - websocket:
           route: $default
+  GetAvail:
+    description: 'Allows client to get up to date on host availability'
+    handler: api/availability.GetAvail
+    events:
+      - websocket:
+          route: GetAvail
   slack:
     handler: relay.slack
     events:

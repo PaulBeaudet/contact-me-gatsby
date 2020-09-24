@@ -9,7 +9,7 @@ const WaysToContact = () => {
 
   // ask and listen for host availability
   useEffect(() => {
-    wsSend('GET_AVAIL');
+    wsSend('GetAvail');
     wsOn('AVAIL', req => {
       setAvailable(req.avail);
     });

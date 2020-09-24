@@ -37,13 +37,10 @@ const socket = {
       onSend
     );
   },
-  send: (event, connectionId, jsonData, unresponsiveCB, success) => {
-    if (!success) {
-      success = () => {};
-    }
+  send: (event, connectionId, jsonData, unresponsiveCB, success = () => {}) => {
     if (event.deabute) {
       if (event.resD) {
-        if (event.deabute.response(jsonData)) {
+        if (event.deabute.responseFunc(jsonData)) {
           success();
         } else {
           unresponsiveCB(connectionId);
@@ -77,6 +74,65 @@ const socket = {
   },
 };
 
+// response function when running a singular server
+const monolithCreateResponder = (
+  connectionId,
+  jsonData,
+  success = () => {},
+  event,
+  unresponsiveCB
+) => {
+  return () => {
+    if (event.resD) {
+      if (event.deabute.responseFunc(jsonData)) {
+        success();
+      } else {
+        unresponsiveCB(connectionId);
+      }
+    } else {
+      if (event.deabute.sendTo(connectionId, jsonData)) {
+        success();
+      } else {
+        unresponsiveCB(connectionId);
+      }
+    }
+  };
+};
+
+// default to creating api gateway responses
+let createResponder = (
+  connectionId,
+  jsonData,
+  success = () => {},
+  event,
+  unresponsiveCB
+) => {
+  return () => {
+    const gateway = new AWS.ApiGatewayManagementApi({
+      apiVersion: '2018-11-29',
+      endpoint: event.requestContext.domainName + '/signal',
+    });
+    gateway.postToConnection(
+      {
+        ConnectionId: connectionId,
+        Data: JSON.stringify(jsonData),
+      },
+      error => {
+        if (error) {
+          unresponsiveCB(connectionId);
+        } else {
+          success();
+        }
+      }
+    );
+  };
+};
+
+// Change responder upfront depending on the environment
+if (process.env.MONOLITH === 'true') {
+  createResponder = monolithCreateResponder;
+}
+
 const parseBody = (body, callback) => {
   try {
     const jsonBody = JSON.parse(body);
@@ -88,4 +144,5 @@ const parseBody = (body, callback) => {
 };
 
 module.exports.socket = socket;
+module.exports.createResponder = createResponder;
 module.exports.parseBody = parseBody;

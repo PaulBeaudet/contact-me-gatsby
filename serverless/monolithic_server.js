@@ -5,8 +5,8 @@ const path = require('path');
 const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
-const Responses = require('./apiGateway/API_Response');
-const { mongo } = require('./dbAbstractions/mongo');
+const Responses = require('./api/API_Response');
+const { mongo } = require('./db/mongo');
 
 // similar logic to new mongo.ObjectID() except this just returns a string
 const createOid = () => {
@@ -33,10 +33,10 @@ let wsConnections = [];
 const gatewayWs = {
   connect: async event => {
     console.log(event);
-    const { connectionId, sendFunc } = event.requestContext;
+    const { connectionId, responseFunc } = event.requestContext;
     wsConnections.push({
       connectionId,
-      sendFunc,
+      responseFunc,
     });
     return Responses._200({ message: 'connected' });
   },
@@ -64,29 +64,30 @@ const socket = {
     }).on('connection', ws => {
       // connection information to hold in memory or persistently
       const connectionId = createOid();
-      const sendFunc = socket.send(ws); // <- this may be tough to store server side
+      const responseFunc = socket.send(ws); // <- this may be tough to store server side
       // Emulate connect event in api gateway
       gatewayWs.connect({
         requestContext: {
           connectionId,
-          sendFunc,
+          responseFunc,
         },
       });
       // handle incoming request
       ws.on('message', message => {
-        socket.incoming(message, sendFunc, connectionId);
+        socket.incoming(message, responseFunc, connectionId);
       });
     });
   },
   send: ws => {
-    return msgObj => {
+    return (action, msgObj = {}) => {
+      console.log(`Sending: ${action}`);
+      msgObj.action = action;
       let msg = '';
       try {
         msg = JSON.stringify(msgObj);
       } catch (error) {
         console.log(error);
       }
-      console.log('response from server ' + msg);
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(msg);
         return true;
@@ -123,7 +124,7 @@ const socket = {
     },
   ],
   // handle incoming socket messages
-  incoming: (event, sendFunc, connectionId) => {
+  incoming: (event, responseFunc, connectionId) => {
     let req = { action: null };
     // if error we don't care there is a default object
     try {
@@ -140,7 +141,7 @@ const socket = {
           body: event,
           deabute: {
             sendTo: socket.sendTo,
-            response: sendFunc,
+            responseFunc,
           },
           requestContext: {
             connectionId,

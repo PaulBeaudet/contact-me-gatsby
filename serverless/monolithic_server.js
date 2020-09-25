@@ -5,7 +5,7 @@ const path = require('path');
 const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
-const { mongo } = require('./db/mongo');
+const { close } = require('./db/mongo');
 
 // similar logic to new mongo.ObjectID() except this just returns a string
 const createOid = () => {
@@ -52,10 +52,7 @@ const gatewayWs = {
   },
 };
 
-const sendTo = (oid, action, msgObj = {}, event) => {
-  console.log(
-    `sending event initialized by ${event.requestContext.connectionId}`
-  );
+const convertMsg = (action, msgObj) => {
   msgObj.action = action;
   let msg = '';
   try {
@@ -63,10 +60,17 @@ const sendTo = (oid, action, msgObj = {}, event) => {
   } catch (error) {
     console.log(error);
   }
+  return msg;
+};
+
+const sendTo = (oid, action, msgObj = {}, event) => {
+  console.log(
+    `sending event initialized by ${event.requestContext.connectionId}`
+  );
+  const msg = convertMsg(action, msgObj);
   let sentMessage = false;
   socket.server.clients.find(client => {
-    console.log(`Client ${client.connectionId}:${client.readyState}`);
-    if (client.readyState === WebSocket.OPEN && client.connectionId === oid) {
+    if (client.connectionId === oid && client.readyState === WebSocket.OPEN) {
       client.send(msg);
       sentMessage = true;
       return;
@@ -74,6 +78,31 @@ const sendTo = (oid, action, msgObj = {}, event) => {
   });
   // maybe if sent is false you should remove from db
   return sentMessage;
+};
+
+// broadcast to everyone except for connection that initialized
+const broadcast = (oid, action, msgObj = {}, event) => {
+  console.log(
+    `broadcast event initialized by ${event.requestContext.connectionId}`
+  );
+  const msg = convertMsg(action, msgObj);
+  socket.server.clients.forEach(client => {
+    if (client.connectionId !== oid && client.readyState === WebSocket.OPEN) {
+      client.send(msg);
+    }
+  });
+};
+
+const broadcastAll = (oid, action, msgObj = {}, event) => {
+  console.log(
+    `broadcastAll event initialized by ${event.requestContext.connectionId}`
+  );
+  const msg = convertMsg(action, msgObj);
+  socket.server.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(msg);
+    }
+  });
 };
 
 const socket = {
@@ -109,18 +138,9 @@ const socket = {
   send: ws => {
     return (oid, action, msgObj = {}) => {
       console.log(`Responding to ${oid} with: ${action}`);
-      msgObj.action = action;
-      let msg = '';
-      try {
-        msg = JSON.stringify(msgObj);
-      } catch (error) {
-        console.log(error);
-      }
+      const msg = convertMsg(action, msgObj);
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(msg);
-        return true;
-      } else {
-        return false;
       }
     };
   },
@@ -158,6 +178,8 @@ const socket = {
         // not an api gateway properties
         sendTo,
         respond,
+        broadcast,
+        broadcastAll,
       });
     } else {
       console.log(`no handler: ${req.action}`);
@@ -273,7 +295,7 @@ if (!module.parent) {
 } // run server if called stand alone
 
 process.once('SIGUSR2', () => {
-  mongo.close();
+  close(); // I highly doubt this works...
   console.log('nodemon gotta restart em all');
   process.kill(process.pid, 'SIGUSR2');
 });

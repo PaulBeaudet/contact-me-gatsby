@@ -7,7 +7,7 @@ const GetAvail = async event => {
   // -- look up if host is available in db --
   // -- Send event --
   const { connectionId } = event.requestContext;
-  respond(connectionId, 'AVAIL', { avail: true }, event);
+  respond(connectionId, 'AVAIL', { avail: false }, event);
   return _200();
 };
 // responds with "AVAIL"

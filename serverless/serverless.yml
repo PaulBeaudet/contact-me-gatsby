@@ -43,6 +43,12 @@ functions:
     events:
       - websocket:
           route: GetAvail
+  login:
+    description: 'request to log into service'
+    handler: api/authentication.login
+    events:
+      - websocket:
+          route: login
   slack:
     handler: relay.slack
     events:

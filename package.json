@@ -6,6 +6,7 @@
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
     "aws-sdk": "^2.758.0",
+    "bcryptjs": "^2.4.3",
     "express": "^4.17.1",
     "firebase": "^7.21.0",
     "firebaseui": "^4.6.1",

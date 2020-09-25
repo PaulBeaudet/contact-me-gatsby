@@ -33,7 +33,7 @@ const Authenticate = () => {
   const logInAction = data => {
     const { email, password } = data;
     wsSend('login', {
-      username: email,
+      email,
       password,
       oid: lStorage.read('oid'),
     });

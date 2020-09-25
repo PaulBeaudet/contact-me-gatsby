@@ -43,9 +43,15 @@ const mongo = {
       return await collection.deleteOne(query);
     }, collectionName);
   },
+  // will just find first user in db if no query is passed
+  findOne: async (query = {}, collectionName = 'users') => {
+    return await mongo.connect(async collection => {
+      return await collection.findOne(query);
+    }, collectionName);
+  },
   close: () => {
     client.close().catch(console.log);
   },
 };
 
-module.exports.mongo = mongo;
+module.exports = mongo;

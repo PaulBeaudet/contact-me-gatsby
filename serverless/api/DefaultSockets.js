@@ -6,23 +6,30 @@ const { mongo } = require('../db/mongo');
 const gatewayWSS = {
   connect: async event => {
     const { connectionId } = event.requestContext;
-    const result = await mongo.insertOne({ connectionId }).catch(console.dir);
-    console.log(`${result.insertedCount}: connection added`);
-    return result;
+    // the only way to make the database call without caring about the result
+    // is to call mongo.insertOne({...}) without await,
+    // without logging any part of the result
+    try {
+      const result = await mongo.insertOne({ connectionId });
+      console.log(`${result.insertedCount}: connection added`);
+    } catch (error) {
+      console.dir(error);
+    }
+    return Responses._200({});
   },
   disconnect: async event => {
     const { connectionId } = event.requestContext;
-    const result = await mongo
-      .deleteOne({
-        connectionId,
-      })
-      .catch(console.log);
-    console.log(`${result.deletedCount}: connection deleted`);
-    return result;
+    try {
+      const result = await mongo.deleteOne({ connectionId });
+      console.log(`${result.deletedCount}: connection deleted`);
+    } catch (error) {
+      console.dir(error);
+    }
+    return Responses._200({});
   },
   default: async event => {
     console.log(event);
-    return Responses._400({ message: 'nope' });
+    return Responses._200({ message: 'nope' });
   },
 };
 

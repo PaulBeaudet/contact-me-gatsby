@@ -5,7 +5,6 @@ const path = require('path');
 const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
-const Responses = require('./api/API_Response');
 const { mongo } = require('./db/mongo');
 
 // similar logic to new mongo.ObjectID() except this just returns a string
@@ -38,7 +37,6 @@ const gatewayWs = {
       connectionId,
       responseFunc,
     });
-    return Responses._200({ message: 'connected' });
   },
   disconnect: async event => {
     // console.dir(event);
@@ -47,40 +45,70 @@ const gatewayWs = {
     wsConnections = wsConnections.filter(
       connection => connection.connectionId !== connectionId
     );
-    return Responses._200({ message: 'disconnected' });
   },
   default: async event => {
     // route has yet to be created
     console.dir(event);
-    return Responses._400({ message: 'nope' });
   },
 };
 
+const sendTo = (oid, action, msgObj = {}, event) => {
+  console.log(
+    `sending event initialized by ${event.requestContext.connectionId}`
+  );
+  msgObj.action = action;
+  let msg = '';
+  try {
+    msg = JSON.stringify(msgObj);
+  } catch (error) {
+    console.log(error);
+  }
+  let sentMessage = false;
+  socket.server.clients.find(client => {
+    console.log(`Client ${client.connectionId}:${client.readyState}`);
+    if (client.readyState === WebSocket.OPEN && client.connectionId === oid) {
+      client.send(msg);
+      sentMessage = true;
+      return;
+    }
+  });
+  // maybe if sent is false you should remove from db
+  return sentMessage;
+};
+
 const socket = {
+  server: null,
   init: server => {
-    new WebSocket.Server({
+    socket.server = new WebSocket.Server({
       server,
-      autoAcceptConnections: false,
-    }).on('connection', ws => {
+      autoAcceptConnections: false, // is this a thing?
+    });
+    socket.server.on('connection', ws => {
       // connection information to hold in memory or persistently
       const connectionId = createOid();
-      const responseFunc = socket.send(ws); // <- this may be tough to store server side
+      const responseFunc = socket.send(ws);
       // Emulate connect event in api gateway
-      gatewayWs.connect({
+      const gwEvent = {
         requestContext: {
           connectionId,
           responseFunc,
         },
-      });
+      };
+      gatewayWs.connect(gwEvent);
       // handle incoming request
       ws.on('message', message => {
         socket.incoming(message, responseFunc, connectionId);
       });
+      ws.connectionId = connectionId;
+      ws.on('close', code => {
+        console.log(`Client closing with code ${code}`);
+        gatewayWs.disconnect(gwEvent);
+      });
     });
   },
   send: ws => {
-    return (action, msgObj = {}) => {
-      console.log(`Sending: ${action}`);
+    return (oid, action, msgObj = {}) => {
+      console.log(`Responding to ${oid} with: ${action}`);
       msgObj.action = action;
       let msg = '';
       try {
@@ -96,22 +124,6 @@ const socket = {
       }
     };
   },
-  sendTo: (oid, msgObj) => {
-    let msg = '';
-    try {
-      msg = JSON.stringify(msgObj);
-    } catch (error) {
-      console.log(error);
-    }
-    console.log('response from server ' + msg);
-    for (let i = 0; i < wsConnections.length; i++) {
-      if (wsConnections[i].connectionId === oid) {
-        const sent = wsConnections[i].sendFunc(msgObj);
-        return sent ? true : false;
-      }
-    }
-    return false;
-  },
   on: (action, func) => {
     socket.handlers.push({ action, func });
   },
@@ -124,7 +136,7 @@ const socket = {
     },
   ],
   // handle incoming socket messages
-  incoming: (event, responseFunc, connectionId) => {
+  incoming: (event, respond, connectionId) => {
     let req = { action: null };
     // if error we don't care there is a default object
     try {
@@ -132,30 +144,28 @@ const socket = {
     } catch (error) {
       console.log(error);
     }
-    const apiGWCallback = (firstArg, secondArg) => {
-      console.log(JSON.stringify(secondArg));
-    };
-    for (let h = 0; h < socket.handlers.length; h++) {
-      if (req.action === socket.handlers[h].action) {
-        const apiGWEvent = {
-          body: event,
-          deabute: {
-            sendTo: socket.sendTo,
-            responseFunc,
-          },
-          requestContext: {
-            connectionId,
-          },
-        };
-        socket.handlers[h].func(apiGWEvent, {}, apiGWCallback);
-        return;
-      }
+    // find handler we are looking for
+    const endpoint = socket.handlers.find(
+      handler => req.action === handler.action
+    );
+    if (endpoint) {
+      console.log(`endpoint = ${endpoint.action}`);
+      endpoint.func({
+        body: event,
+        requestContext: {
+          connectionId,
+        },
+        // not an api gateway properties
+        sendTo,
+        respond,
+      });
+    } else {
+      console.log(`no handler: ${req.action}`);
     }
     if (req.message === 'Internal server error') {
-      console.log('Oops something when wrong: ' + JSON.stringify(req));
+      console.log(`Server error: ${req.action}`);
       return;
     }
-    console.log('no handler ' + event);
   },
 };
 
@@ -218,9 +228,10 @@ const serverless = {
           if (route === '$connect') {
             gatewayWs.connect = mod[funcName];
           } else if (route === '$disconnect') {
+            gatewayWs.disconnect = mod[funcName];
             // This is not the same as $disconnect which will be
             // triggered by client without 'beforeunload' listener
-            socket.on('disconnect', mod[funcName]);
+            // socket.on('disconnect', mod[funcName]);
             // NOTE: if in memory connection management is desired
             // add this "on" event for placeholder in init
             // then figure how this event could replace it in handler array

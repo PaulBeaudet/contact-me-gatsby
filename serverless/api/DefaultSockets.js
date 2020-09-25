@@ -1,6 +1,6 @@
 // gateway.js ~ Copyright 2019-2020 Paul Beaudet
-const Responses = require('./API_Response');
 const { mongo } = require('../db/mongo');
+const { _200 } = require('./gatewaySocketAdapter');
 
 // This is where we manage our socket connections persistently in our database
 const gatewayWSS = {
@@ -15,7 +15,7 @@ const gatewayWSS = {
     } catch (error) {
       console.dir(error);
     }
-    return Responses._200({});
+    return _200();
   },
   disconnect: async event => {
     const { connectionId } = event.requestContext;
@@ -25,11 +25,11 @@ const gatewayWSS = {
     } catch (error) {
       console.dir(error);
     }
-    return Responses._200({});
+    return _200();
   },
   default: async event => {
     console.log(event);
-    return Responses._200({ message: 'nope' });
+    return _200({ message: 'nope' });
   },
 };
 

@@ -49,7 +49,6 @@ export const wsOn = (action: string, func: any) => {
 
 // Listener for all incoming socket messages
 const incoming = (event: any) => {
-  console.log(`incoming event: ${event}`);
   let req = { action: null };
   // if error we don't care there is a default object
   try {
@@ -57,17 +56,12 @@ const incoming = (event: any) => {
   } catch (error) {
     console.log(error);
   }
-  if (
-    !handlers.find(handler => {
-      if (req.action === handler.action) {
-        // maybe delete action key here
-        handler.func(req);
-        return true;
-      }
-    })
-  ) {
-    // given no handler found in array
-    console.log('no handler ' + event.data);
+  const eventToHandle = handlers.find(handler => req.action === handler.action);
+  if (eventToHandle) {
+    eventToHandle.func(req);
+    console.log(`Handling event: ${req.action}`);
+  } else {
+    console.log(`No handler: ${req.action}`);
   }
 };
 

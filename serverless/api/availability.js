@@ -1,15 +1,14 @@
 // availability.js Copyright 2020 Paul Beaudet MIT License
-// require('./socket');
+const { respond, _200 } = require('./gatewaySocketAdapter');
 // require('../db/mongo');
 
 // lambda function for handling "GetAvail"
 const GetAvail = async event => {
   // -- look up if host is available in db --
   // -- Send event --
-  // NOTE: this wont work in lambda
-  // Need to re-think how socket.send works to use promises instead of callbacks
-  event.deabute.responseFunc('AVAIL', { avail: false });
-  return;
+  const { connectionId } = event.requestContext;
+  respond(connectionId, 'AVAIL', { avail: true }, event);
+  return _200();
 };
 // responds with "AVAIL"
 

@@ -115,23 +115,29 @@ const socket = {
     socket.server.on('connection', ws => {
       // connection information to hold in memory or persistently
       const connectionId = createOid();
-      const responseFunc = socket.send(ws);
+      const respond = socket.send(ws);
       // Emulate connect event in api gateway
       const gwEvent = {
         requestContext: {
           connectionId,
-          responseFunc,
+          respond,
         },
       };
       gatewayWs.connect(gwEvent);
       // handle incoming request
       ws.on('message', message => {
-        socket.incoming(message, responseFunc, connectionId);
+        socket.incoming(message, respond, connectionId);
       });
       ws.connectionId = connectionId;
       ws.on('close', code => {
         console.log(`Client closing with code ${code}`);
-        gatewayWs.disconnect(gwEvent);
+        gatewayWs.disconnect({
+          ...gwEvent,
+          respond,
+          sendTo,
+          broadcast,
+          broadcastAll,
+        });
       });
     });
   },

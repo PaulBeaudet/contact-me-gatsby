@@ -52,6 +52,17 @@ const mongo = {
   close: () => {
     client.close().catch(console.log);
   },
+  updateOne: async (
+    filter,
+    update,
+    collectionName = 'users',
+    upsert = false
+  ) => {
+    const options = { upsert };
+    return await mongo.connect(async collection => {
+      return await collection.updateOne(filter, { $set: update }, options);
+    }, collectionName);
+  },
 };
 
 module.exports = mongo;

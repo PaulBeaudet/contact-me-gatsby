@@ -50,6 +50,24 @@ functions:
     events:
       - websocket:
           route: login
+  ice:
+    description: 'Exchange ice candidates'
+    handler: api/WebRTC.ice
+    events:
+      - websocket:
+          route: ice
+  offer:
+    description: 'Offer SDP negotiation data to host'
+    handler: api/WebRTC.offer
+    events:
+      - websocket:
+          route: offer
+  answer:
+    description: 'Answer from host with SPD data'
+    handler: api/WebRTC.answer
+    events:
+      - websocket:
+          route: answer
   slack:
     handler: relay.slack
     events:

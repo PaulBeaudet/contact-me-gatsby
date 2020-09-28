@@ -28,7 +28,7 @@ const gatewayWSS = {
       );
       if (updateResult && updateResult.modifiedCount) {
         // Let other clients know that host is offline
-        broadcast(connectionId, 'AVAIL', { avail: false }, event);
+        broadcast(connectionId, 'AVAIL', { avail: false, hostId: '' }, event);
         console.log(`host updated to unavailable`);
       }
       return _200();

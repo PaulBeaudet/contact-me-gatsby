@@ -99,10 +99,12 @@ const parseBody = event => {
   }
 };
 
-module.exports.parseBody = parseBody;
-module.exports._400 = lambdaReturn(400);
-module.exports._200 = lambdaReturn(200);
-module.exports.send = send;
-module.exports.respond = respond;
-module.exports.broadcast = broadcast;
-module.exports.broadcastAll = broadcastAll;
+module.exports = {
+  _200: lambdaReturn(200),
+  _400: lambdaReturn(400),
+  parseBody,
+  send,
+  respond,
+  broadcast,
+  broadcastAll,
+};

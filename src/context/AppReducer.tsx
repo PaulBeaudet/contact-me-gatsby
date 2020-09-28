@@ -16,6 +16,16 @@ export default (state: GlobalContextType, action: reducerActionType) => {
       ...state,
       ...action.payload,
     };
+  } else if (action.type === 'HOST_ATTEMPT') {
+    return {
+      ...state,
+      host: true,
+    };
+  } else if (action.type === 'HOST_FAIL') {
+    return {
+      ...state,
+      host: false,
+    };
   } else {
     return state;
   }

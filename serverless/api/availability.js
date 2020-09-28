@@ -12,9 +12,9 @@ const GetAvail = async event => {
     if (!findResult) {
       return _400();
     }
-    const { avail } = findResult;
+    const { avail, connectionId: hostId } = findResult;
     // Respond to requesting client with host availability
-    respond(connectionId, 'AVAIL', { avail }, event);
+    respond(connectionId, 'AVAIL', { avail, hostId }, event);
     return _200();
   } catch (error) {
     console.log(error);

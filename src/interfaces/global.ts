@@ -14,10 +14,8 @@ export type MetaQuery = {
 
 export interface GlobalContextType {
   loggedIn: boolean;
-  // displayName: string;
   email: string;
-  // photoURL: string;
-  // uid: string;
+  host: boolean;
 }
 
 export interface reducerActionType {

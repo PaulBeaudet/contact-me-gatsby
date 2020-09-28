@@ -2,12 +2,11 @@ import React, { createContext, useReducer } from 'react';
 import { GlobalContextType } from '../interfaces/global';
 import AppReducer from './AppReducer';
 
+// default user state to initiate with
 export const userState: GlobalContextType = {
   loggedIn: false,
-  displayName: '',
   email: '',
-  photoURL: '',
-  uid: '',
+  host: false,
 };
 
 interface props {

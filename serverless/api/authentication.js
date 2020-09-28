@@ -29,7 +29,12 @@ const login = async event => {
       return _200();
     }
     // broadcast availability to other clients given password checks out
-    broadcastAll(connectionId, 'AVAIL', { avail: true }, event);
+    broadcastAll(
+      connectionId,
+      'AVAIL',
+      { avail: true, hostId: connectionId },
+      event
+    );
     // let user know they are logged in
     respond(connectionId, 'login', { email, username, connectionId }, event);
     // update user in database

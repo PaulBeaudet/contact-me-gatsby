@@ -3,6 +3,7 @@ import { GlobalUserContext } from '../context/GlobalState';
 import { useForm } from 'react-hook-form';
 import { wsSend, wsOn } from '../api/WebSocket';
 import { loadStorage, noStorage } from '../api/LocalStorage';
+import { offerResponse } from '../api/WebRTC';
 
 const Authenticate = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -22,11 +23,16 @@ const Authenticate = () => {
             ...req,
           },
         });
+        wsOn('offer', offerResponse);
       } else {
+        dispatch({ type: 'HOST_FAIL' });
         console.log('Oops something when wrong');
       }
     });
-    wsOn('reject', console.log);
+    wsOn('reject', payload => {
+      console.dir(payload);
+      dispatch({ type: 'HOST_FAIL' });
+    });
     wsOn('fail', console.log);
   }, []);
 
@@ -37,6 +43,7 @@ const Authenticate = () => {
       password,
       oid: lStorage.read('oid'),
     });
+    dispatch({ type: 'HOST_ATTEMPT' });
     reset();
   };
 

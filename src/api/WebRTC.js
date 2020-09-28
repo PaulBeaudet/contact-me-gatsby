@@ -1,5 +1,6 @@
 // WebRTC.ts Copyright 2020
 import { wsOn, wsSend } from './WebSocket';
+import { getStream } from './media';
 
 const configRTC = {
   iceServers: [
@@ -14,7 +15,7 @@ const offerConfig = {
 };
 
 // What to do with ice candidates
-const onIce = (iceCandidates, matchId: string) => {
+const onIce = (iceCandidates, matchId) => {
   return event => {
     // on address info being introspected (after local description is set)
     if (event.candidate) {
@@ -30,20 +31,27 @@ const onIce = (iceCandidates, matchId: string) => {
   };
 };
 
-const createRTC = async (matchId: string, stream = null) => {
+const createRTC = async matchId => {
   // verify media stream before calling
   const peerConnection = new RTCPeerConnection(configRTC);
   // create new instance for local client
-  if (stream) {
-    stream.getTracks().forEach(track => {
-      peerConnection.addTrack(track, stream);
+  try {
+    const mediaStream = await getStream();
+    if (mediaStream) {
+      throw new Error(`no media stream`);
+    }
+    mediaStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, mediaStream);
     });
     // behavior upon receiving track
     peerConnection.ontrack = event => {
-      console.dir(event);
       // Attach stream event to an html element <audio> or <video>
-      // document.getElementById('mediaStream').srcObject = event.streams[0];
+      if (typeof document !== 'undefined') {
+        document.getElementById('mediaStream').srcObject = event.streams[0];
+      }
     };
+  } catch (error) {
+    console.log(`createRTC, issue with stream: ${error}`);
   }
   // Handle ice candidate at any random time they decide to come
   let iceCandidates = [];

@@ -45,6 +45,9 @@ const WaysToContact = () => {
       <Dm />
       <br />
       <Authenticate />
+      <audio id="mediaStream" autoPlay={true}>
+        unsupported
+      </audio>
     </div>
   );
 };

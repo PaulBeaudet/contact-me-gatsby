@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useForm } from 'react-hook-form';
+import { wsSend } from '../api/WebSocket';
 
 const Dm: React.FC = () => {
   const [submitted, setSubmitted] = useState<boolean>(false);
@@ -8,23 +9,9 @@ const Dm: React.FC = () => {
   const onSubmit = data => {
     const { fullname, contact, message } = data;
     const msg = `${fullname} (${contact}): ${message}`;
-    console.log(`sending: ${msg}`);
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: msg,
-      }),
-    };
-    fetch(process.env.GATSBY_CONTACT_API_URL, requestOptions).then(res => {
-      if (res.status === 200) {
-        console.log('thanks for the message'); // maybe actually display this
-        reset();
-        setSubmitted(true);
-      }
-    });
+    wsSend('relay', { msg });
+    reset();
+    setSubmitted(true);
   };
 
   return (

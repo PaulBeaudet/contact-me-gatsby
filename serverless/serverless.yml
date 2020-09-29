@@ -68,12 +68,9 @@ functions:
     events:
       - websocket:
           route: answer
-  slack:
-    handler: relay.slack
+  relay:
+    description: 'Relays messages from contact form to slack'
+    handler: api/slackDM.relay
     events:
-      - http:
-          path: dm
-          method: POST
-          cors:
-            origins:
-              - 'https://${env:BUCKET_NAME}'
+      - websocket:
+          route: relay

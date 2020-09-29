@@ -13,16 +13,18 @@ const Authenticate = () => {
 
   useEffect(() => {
     setLStorage(loadStorage());
-    wsOn('loggedin', req => {
-      if (req.token && req.oid) {
-        lStorage.write({ ...req });
+    wsOn('login', payload => {
+      const { email } = payload;
+      if (email) {
+        lStorage.write({ ...payload });
         dispatch({
           type: 'SIGN_IN',
           payload: {
             loggedIn: true,
-            ...req,
+            ...payload,
           },
         });
+        console.log(`Setting up offer listener`);
         wsOn('offer', offerResponse);
       } else {
         dispatch({ type: 'HOST_FAIL' });

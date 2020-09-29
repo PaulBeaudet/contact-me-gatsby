@@ -25,10 +25,10 @@ const WaysToContact = () => {
   useEffect(() => {
     // Make sure not the host before making an offer
     // to talk to the host
-    if (!host) {
+    if (!host && available && hostId) {
       // Creates and relays a WebRTC offer to connect
       // with host of link
-      createOffer(hostId);
+      createOffer();
     }
   }, [available, hostId]);
 

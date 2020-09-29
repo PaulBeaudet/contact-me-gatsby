@@ -68,16 +68,11 @@ const sendTo = (oid, action, msgObj = {}, event) => {
     `sending event initialized by ${event.requestContext.connectionId}`
   );
   const msg = convertMsg(action, msgObj);
-  let sentMessage = false;
-  socket.server.clients.find(client => {
+  socket.server.clients.forEach(client => {
     if (client.connectionId === oid && client.readyState === WebSocket.OPEN) {
       client.send(msg);
-      sentMessage = true;
-      return;
     }
   });
-  // maybe if sent is false you should remove from db
-  return sentMessage;
 };
 
 // broadcast to everyone except for connection that initialized

@@ -26,12 +26,14 @@ const ice = async event => {
 const offer = async event => {
   const body = parseBody(event.body);
   if (!body) {
+    console.log(`offer: No body!`);
     return _400();
   }
   const { sdp } = body;
   // Make sure Session Description Protocol (SDP) data exist
   // It will need to be offered to the host
   if (!sdp) {
+    console.log(`No sdp data`);
     return _400();
   }
   // Rename this guest's connectionId to guestId
@@ -40,16 +42,19 @@ const offer = async event => {
   const findResult = await findOne({ email: process.env.HOST_EMAIL });
   // Something went wrong if the host isn't in the db
   if (!findResult) {
+    console.log(`could not find host on offer`);
     return _400();
   }
   // Rename host's connectionId to hostId
   const { connectionId: hostId } = findResult;
   // no host id would mean host is unavailable (Rouge Client?)
   if (!hostId) {
+    console.log(`did not get host id from db`);
     return _400();
   }
   // Send this offer to the host from the guest
   send(hostId, 'offer', { sdp, matchId: guestId }, event);
+  console.log(`sent offer to ${hostId}`);
   return _200();
 };
 

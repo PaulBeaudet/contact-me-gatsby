@@ -13,17 +13,19 @@ const bcrypt = require('bcryptjs');
 const login = async event => {
   // -- look up if user is in db --
   const { connectionId } = event.requestContext;
-  const data = parseBody(event);
+  const data = parseBody(event.body);
   if (!data) {
+    console.log(`login: No body!`);
     return _400();
   }
   const { email, password } = data;
   try {
     const findResult = await findOne({ email });
     if (!findResult) {
+      console.log('could not find host?');
       return _400();
     }
-    const { passHash, username } = findResult;
+    const { passHash } = findResult;
     const compare = await bcrypt.compare(password, passHash);
     if (!compare) {
       return _200();
@@ -36,7 +38,7 @@ const login = async event => {
       event
     );
     // let user know they are logged in
-    respond(connectionId, 'login', { email, username, connectionId }, event);
+    respond(connectionId, 'login', { email }, event);
     // update user in database
     const updateResult = await updateOne(
       { email },

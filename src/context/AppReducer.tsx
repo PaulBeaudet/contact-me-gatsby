@@ -5,6 +5,7 @@ export default (state: GlobalContextType, action: reducerActionType) => {
   if (action.type === 'SIGN_IN') {
     // add user data when logged in
     return {
+      ...state,
       ...action.payload,
     };
   } else if (action.type === 'LOG_OUT') {

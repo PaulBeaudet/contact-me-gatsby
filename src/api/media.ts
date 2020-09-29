@@ -22,4 +22,4 @@ const getStream = async () => {
   }
 };
 
-export = { getStream };
+export { getStream };

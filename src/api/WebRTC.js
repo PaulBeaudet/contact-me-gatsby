@@ -1,4 +1,4 @@
-// WebRTC.ts Copyright 2020
+// WebRTC.ts Copyright 2020 Paul Beaudet MIT License
 import { wsOn, wsSend } from './WebSocket';
 import { getStream } from './media';
 
@@ -14,8 +14,10 @@ const offerConfig = {
   offerToReceiveVideo: false,
 };
 
+let matchId = '';
+
 // What to do with ice candidates
-const onIce = (iceCandidates, matchId) => {
+const onIce = iceCandidates => {
   return event => {
     // on address info being introspected (after local description is set)
     if (event.candidate) {
@@ -24,20 +26,27 @@ const onIce = (iceCandidates, matchId) => {
     } else {
       // Absence of a candidate means a finished exchange
       // Send ice candidates to match once we have them all
-      wsSend('ice', { iceCandidates, matchId });
-      // empty candidates once they are sent
-      iceCandidates = [];
+      if (matchId) {
+        console.log(`sending ice candidates to ${matchId}`);
+        wsSend('ice', { iceCandidates, matchId });
+        // empty candidates once they are sent
+        iceCandidates = [];
+      } else {
+        setTimeout(() => {
+          onIce(iceCandidates)(event);
+        }, 50);
+      }
     }
   };
 };
 
-const createRTC = async matchId => {
+const createRTC = async () => {
   // verify media stream before calling
   const peerConnection = new RTCPeerConnection(configRTC);
   // create new instance for local client
   try {
     const mediaStream = await getStream();
-    if (mediaStream) {
+    if (!mediaStream) {
       throw new Error(`no media stream`);
     }
     mediaStream.getTracks().forEach(track => {
@@ -55,7 +64,7 @@ const createRTC = async matchId => {
   }
   // Handle ice candidate at any random time they decide to come
   let iceCandidates = [];
-  peerConnection.onicecandidate = onIce(iceCandidates, matchId);
+  peerConnection.onicecandidate = onIce(iceCandidates);
   return peerConnection;
 };
 
@@ -70,13 +79,14 @@ const iceHandler = peerConnection => {
 };
 
 // makes an offer to connect
-const createOffer = async matchId => {
+const createOffer = async () => {
   try {
-    const peerConnection = await createRTC(matchId);
+    const peerConnection = await createRTC();
     // assign a handler to addressing handshake
     wsOn('ice', iceHandler(peerConnection));
     // Respond if host answers our offer
     wsOn('answer', payload => {
+      matchId = payload.matchId;
       peerConnection.setRemoteDescription(payload.sdp);
     });
     const description = await peerConnection.createOffer(offerConfig);
@@ -90,8 +100,10 @@ const createOffer = async matchId => {
 // Creates a websocket handler for "offer" event
 const offerResponse = async payload => {
   try {
-    const { sdp, matchId } = payload;
-    const peerConnection = await createRTC(matchId);
+    const { sdp, matchId: ourMatch } = payload;
+    matchId = ourMatch;
+    console.log(`receiving offer from ${matchId}`);
+    const peerConnection = await createRTC();
     wsOn('ice', iceHandler(peerConnection));
     peerConnection.setRemoteDescription(sdp);
     const answer = await peerConnection.createAnswer();

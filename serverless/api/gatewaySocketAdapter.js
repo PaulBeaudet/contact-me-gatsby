@@ -85,13 +85,14 @@ const lambdaReturn = statusCode => {
   };
 };
 
-const parseBody = event => {
-  if (!event.body) {
+const parseBody = body => {
+  if (!body) {
+    console.log(`parseBody: No body on first check!`);
     return null;
   }
   let data = {};
   try {
-    data = JSON.parse(event.body);
+    data = JSON.parse(body);
     return data;
   } catch (error) {
     console.log(error);

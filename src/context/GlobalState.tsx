@@ -7,6 +7,7 @@ export const userState: GlobalContextType = {
   loggedIn: false,
   email: '',
   host: false,
+  stream: null,
 };
 
 interface props {

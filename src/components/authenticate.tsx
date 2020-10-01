@@ -3,7 +3,6 @@ import { GlobalUserContext } from '../context/GlobalState';
 import { useForm } from 'react-hook-form';
 import { wsSend, wsOn } from '../api/WebSocket';
 import { loadStorage, noStorage } from '../api/LocalStorage';
-import { offerResponse } from '../api/WebRTC';
 
 const Authenticate = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -24,8 +23,6 @@ const Authenticate = () => {
             ...payload,
           },
         });
-        console.log(`Setting up offer listener`);
-        wsOn('offer', offerResponse);
       } else {
         dispatch({ type: 'HOST_FAIL' });
         console.log('Oops something when wrong');

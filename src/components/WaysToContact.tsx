@@ -2,35 +2,65 @@ import React, { useState, useEffect, useContext } from 'react';
 import Dm from './dm';
 import Authenticate from './authenticate';
 import { wsOn, wsSend } from '../api/WebSocket';
-import { createOffer } from '../api/WebRTC';
+// import { rtcConnection } from '../api/WebRTC';
 import { GlobalUserContext } from '../context/GlobalState';
+// import { getStream } from '../api/media';
+import { createOffer, offerResponse } from '../api/WebRTC';
 
 const WaysToContact = () => {
   // State of host availability
   const [available, setAvailable] = useState(false);
-  const [hostId, setHostId] = useState('');
-  const { state } = useContext(GlobalUserContext);
-  const { host } = state;
+  const { state, dispatch } = useContext(GlobalUserContext);
+  const { host, stream } = state;
 
+  // const streamSetup = async () => {
+  //   try {
+  //     // ask for a new or take existing stream
+  //     const useStream = stream ? stream : await getStream();
+  //     dispatch({
+  //       type: 'SET_STREAM',
+  //       payload: { stream: useStream },
+  //     });
+  //     return useStream;
+  //   } catch (error) {
+  //     return error;
+  //   }
+  // };
   // ask and listen for host availability
   useEffect(() => {
     wsSend('GetAvail');
     wsOn('AVAIL', payload => {
-      const { hostId, avail } = payload;
+      const { avail } = payload;
       setAvailable(avail);
-      setHostId(hostId);
+    });
+    wsOn('offer', payload => {
+      console.log('getting an offer');
+      offerResponse(payload);
+      // streamSetup()
+      //   .then(stream => {
+      //     const rtc = new rtcConnection(stream);
+      //     console.log('stream setup responding to offer');
+      //     rtc.offerResponse(payload);
+      //   })
+      //   .catch(console.log);
     });
   }, []);
 
   useEffect(() => {
-    // Make sure not the host before making an offer
-    // to talk to the host
-    if (!host && available && hostId) {
-      // Creates and relays a WebRTC offer to connect
-      // with host of link
+    // Make sure not the host before talking to the host
+    if (!host && available) {
+      //&& hostId) {
+      console.log('creating offer');
       createOffer();
+      // streamSetup()
+      //   .then(stream => {
+      //     const rtc = new rtcConnection(stream);
+      //     console.log(rtc);
+      //     rtc.createOffer();
+      //   })
+      //   .catch(console.log);
     }
-  }, [available, hostId]);
+  }, [available]);
 
   return (
     <div className="basic-grey">
@@ -45,9 +75,9 @@ const WaysToContact = () => {
       <Dm />
       <br />
       <Authenticate />
-      <audio id="mediaStream" autoPlay={true}>
+      <video id="mediaStream" autoPlay={true}>
         unsupported
-      </audio>
+      </video>
     </div>
   );
 };

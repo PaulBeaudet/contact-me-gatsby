@@ -16,6 +16,7 @@ export interface GlobalContextType {
   loggedIn: boolean;
   email: string;
   host: boolean;
+  stream: any;
 }
 
 export interface reducerActionType {

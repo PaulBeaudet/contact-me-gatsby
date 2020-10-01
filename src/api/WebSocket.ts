@@ -58,8 +58,8 @@ const incoming = (event: any) => {
   }
   const eventToHandle = handlers.find(handler => req.action === handler.action);
   if (eventToHandle) {
-    eventToHandle.func(req);
     console.log(`Handling event: ${req.action}`);
+    eventToHandle.func(req);
   } else {
     console.log(`No handler: ${req.action}`);
   }

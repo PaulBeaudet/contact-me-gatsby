@@ -1,6 +1,5 @@
 // socket.js ~ Copyright 2019-2020 Paul Beaudet ~ MIT License
 const AWS = require('aws-sdk');
-const { find } = require('../db/mongo');
 // make apigateway namespace available
 require('aws-sdk/clients/apigatewaymanagementapi');
 
@@ -30,7 +29,7 @@ let send = (ConnectionId, action, jsonData, event) => {
 let respond = send;
 
 // ways to broadcast with a lambda functions
-let broadcast = async (ConnectionId, action, jsonData, event) => {
+let broadcast = async (ConnectionId, action, jsonData, event, db) => {
   const onClient = client => {
     if (client.connectionId === ConnectionId) {
       return;
@@ -38,18 +37,18 @@ let broadcast = async (ConnectionId, action, jsonData, event) => {
     send(client.connectionId, action, jsonData, event);
   };
   try {
-    await find(onClient);
+    await db(process.env.DB_NAME).collection('socketPool').find(onClient);
   } catch (error) {
     console.log(error);
   }
 };
 
-let broadcastAll = async (ConnectionId, action, jsonData, event) => {
+let broadcastAll = async (ConnectionId, action, jsonData, event, db) => {
   const onClient = client => {
     send(client.connectionId, action, jsonData, event);
   };
   try {
-    await find(onClient);
+    await db(process.env.DB_NAME).collection('socketPool').find(onClient);
   } catch (error) {
     console.log(error);
   }
@@ -63,10 +62,10 @@ if (process.env.MONOLITH === 'true') {
   respond = (ConnectionId, action, jsonData, event) => {
     event.respond(ConnectionId, action, jsonData, event);
   };
-  broadcast = (ConnectionId, action, jsonData, event) => {
+  broadcast = (ConnectionId, action, jsonData, event, db) => {
     event.broadcast(ConnectionId, action, jsonData, event);
   };
-  broadcastAll = (ConnectionId, action, jsonData, event) => {
+  broadcastAll = (ConnectionId, action, jsonData, event, db) => {
     event.broadcastAll(ConnectionId, action, jsonData, event);
   };
 }

@@ -6,7 +6,7 @@ const {
   _400,
   broadcastAll,
 } = require('./gatewaySocketAdapter');
-const { findOne, updateOne } = require('../db/mongo');
+const { connectDB, updateDoc } = require('../db/mongo');
 const bcrypt = require('bcryptjs');
 
 // lambda function for handling "login"
@@ -20,7 +20,8 @@ const login = async event => {
   }
   const { email, password } = data;
   try {
-    const findResult = await findOne({ email });
+    const { collection, client, db } = await connectDB('users');
+    const findResult = await collection.findOne({ email });
     if (!findResult) {
       console.log('could not find host?');
       return _400();
@@ -28,6 +29,7 @@ const login = async event => {
     const { passHash } = findResult;
     const compare = await bcrypt.compare(password, passHash);
     if (!compare) {
+      client.close();
       return _200();
     }
     // broadcast availability to other clients given password checks out
@@ -35,17 +37,18 @@ const login = async event => {
       connectionId,
       'AVAIL',
       { avail: true, hostId: connectionId },
-      event
+      event,
+      db
     );
     // let user know they are logged in
     respond(connectionId, 'login', { email }, event);
     // update user in database
-    const updateResult = await updateOne(
-      { email },
-      { connectionId, avail: true }
-    );
+    const filter = { email };
+    const update = updateDoc({ connectionId, avail: true });
+    const updateResult = await collection.updateOne(filter, update);
     if (updateResult && updateResult.modifiedCount) {
       console.log(`${email} successfully logged in`);
+      client.close();
       return _200();
     }
   } catch (error) {
@@ -55,4 +58,6 @@ const login = async event => {
 };
 // responds to all clients with availability if successful
 
-module.exports.login = login;
+module.exports = {
+  login,
+};

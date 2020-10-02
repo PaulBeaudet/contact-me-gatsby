@@ -5,7 +5,6 @@ const path = require('path');
 const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
-const { close } = require('./db/mongo');
 
 // similar logic to new mongo.ObjectID() except this just returns a string
 const createOid = () => {
@@ -77,6 +76,7 @@ const sendTo = (oid, action, msgObj = {}, event) => {
 
 // broadcast to everyone except for connection that initialized
 const broadcast = (oid, action, msgObj = {}, event) => {
+  // TODO use db to keep track of monolith clients
   console.log(
     `broadcast event initialized by ${event.requestContext.connectionId}`
   );
@@ -89,6 +89,7 @@ const broadcast = (oid, action, msgObj = {}, event) => {
 };
 
 const broadcastAll = (oid, action, msgObj = {}, event) => {
+  // TODO use db to keep track of monolith clients
   console.log(
     `broadcastAll event initialized by ${event.requestContext.connectionId}`
   );
@@ -295,8 +296,7 @@ if (!module.parent) {
   serve();
 } // run server if called stand alone
 
-process.once('SIGUSR2', () => {
-  close(); // I highly doubt this works...
-  console.log('nodemon gotta restart em all');
-  process.kill(process.pid, 'SIGUSR2');
-});
+// process.once('SIGUSR2', () => {
+//   console.log('nodemon gotta restart em all');
+//   process.kill(process.pid, 'SIGUSR2');
+// });

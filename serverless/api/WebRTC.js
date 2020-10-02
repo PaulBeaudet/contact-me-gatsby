@@ -1,5 +1,5 @@
 // WebRTC.js Copyright 2020 Paul Beaudet MIT License
-const { findOne } = require('../db/mongo');
+const { connectDB } = require('../db/mongo');
 const { parseBody, _400, send, _200 } = require('./gatewaySocketAdapter');
 
 // lambda for exchanging ice candidates
@@ -39,23 +39,33 @@ const offer = async event => {
   // Rename this guest's connectionId to guestId
   const { connectionId: guestId } = event.requestContext;
   // look up host id in db
-  const findResult = await findOne({ email: process.env.HOST_EMAIL });
-  // Something went wrong if the host isn't in the db
-  if (!findResult) {
-    console.log(`could not find host on offer`);
-    return _400();
+  try {
+    const { collection, client } = await connectDB('users');
+    const findResult = await collection.findOne({
+      email: process.env.HOST_EMAIL,
+    });
+    // Something went wrong if the host isn't in the db
+    if (!findResult) {
+      console.log(`could not find host on offer`);
+      client.close();
+      return _400();
+    }
+    // Rename host's connectionId to hostId
+    const { connectionId: hostId } = findResult;
+    // no host id would mean host is unavailable (Rouge Client?)
+    if (!hostId) {
+      console.log(`did not get host id from db`);
+      client.close();
+      return _400();
+    }
+    // Send this offer to the host from the guest
+    send(hostId, 'offer', { sdp, matchId: guestId }, event);
+    console.log(`sent offer to ${hostId}`);
+    client.close();
+    return _200();
+  } catch (error) {
+    console.log(`Issue with offer: ${error}`);
   }
-  // Rename host's connectionId to hostId
-  const { connectionId: hostId } = findResult;
-  // no host id would mean host is unavailable (Rouge Client?)
-  if (!hostId) {
-    console.log(`did not get host id from db`);
-    return _400();
-  }
-  // Send this offer to the host from the guest
-  send(hostId, 'offer', { sdp, matchId: guestId }, event);
-  console.log(`sent offer to ${hostId}`);
-  return _200();
 };
 
 // lambda for answering WebRTC calls from another user.

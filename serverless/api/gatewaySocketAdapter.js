@@ -37,7 +37,7 @@ let broadcast = async (ConnectionId, action, jsonData, event, db) => {
     send(client.connectionId, action, jsonData, event);
   };
   try {
-    await db(process.env.DB_NAME).collection('socketPool').find(onClient);
+    await db.collection('socketPool').find(onClient);
   } catch (error) {
     console.log(error);
   }
@@ -48,7 +48,7 @@ let broadcastAll = async (ConnectionId, action, jsonData, event, db) => {
     send(client.connectionId, action, jsonData, event);
   };
   try {
-    await db(process.env.DB_NAME).collection('socketPool').find(onClient);
+    await db.collection('socketPool').find(onClient);
   } catch (error) {
     console.log(error);
   }

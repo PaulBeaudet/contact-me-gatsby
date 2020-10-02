@@ -17,6 +17,7 @@ export interface GlobalContextType {
   email: string;
   host: boolean;
   stream: any;
+  hostAvail: boolean;
 }
 
 export interface reducerActionType {

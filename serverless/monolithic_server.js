@@ -5,6 +5,7 @@ const path = require('path');
 const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
+const { startFresh } = require('./db/management');
 
 // similar logic to new mongo.ObjectID() except this just returns a string
 const createOid = () => {
@@ -89,10 +90,6 @@ const broadcast = (oid, action, msgObj = {}, event) => {
 };
 
 const broadcastAll = (oid, action, msgObj = {}, event) => {
-  // TODO use db to keep track of monolith clients
-  console.log(
-    `broadcastAll event initialized by ${event.requestContext.connectionId}`
-  );
   const msg = convertMsg(action, msgObj);
   socket.server.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
@@ -296,7 +293,32 @@ if (!module.parent) {
   serve();
 } // run server if called stand alone
 
-// process.once('SIGUSR2', () => {
-//   console.log('nodemon gotta restart em all');
-//   process.kill(process.pid, 'SIGUSR2');
-// });
+// Its async so it'll read ctrl-c as long as you're pressing the thing.
+let processShutingDown = false;
+
+process.once('SIGUSR2', async () => {
+  if (processShutingDown) {
+    return;
+  }
+  processShutingDown = true;
+  console.log('nodemon gotta restart em all - but lets reset the db first');
+  // pass this function the only communication methods it can use without a connectionId
+  await startFresh({
+    sendTo,
+    broadcastAll,
+  });
+  process.kill(process.pid, 'SIGUSR2');
+});
+
+process.on('SIGINT', async () => {
+  if (processShutingDown) {
+    return;
+  }
+  processShutingDown = true;
+  console.log('  -- oh noes you are ctrl C-ing me again!');
+  await startFresh({
+    sendTo,
+    broadcastAll,
+  });
+  process.exit(0);
+});

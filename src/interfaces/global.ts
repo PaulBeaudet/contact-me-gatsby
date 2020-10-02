@@ -23,3 +23,9 @@ export interface reducerActionType {
   type: string;
   payload: any;
 }
+
+export interface wsPayload {
+  action: string;
+  // Let any other payload items exist other than action
+  [x: string]: any;
+}

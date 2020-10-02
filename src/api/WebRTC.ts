@@ -1,7 +1,8 @@
 // WebRTC.ts Copyright 2020 Paul Beaudet MIT License
 import { wsOn, wsSend } from './WebSocket';
-import { configRTC, offerConfig } from '../config/communication';
+import { configRTC, mediaConfig, offerConfig } from '../config/communication';
 import { getStream } from './media';
+import { wsPayload } from '../interfaces/global';
 
 let matchId = '';
 
@@ -30,8 +31,8 @@ const onIce = iceCandidates => {
 };
 
 // Creates a websocket handler for "ice" event
-const iceHandler = peerConnection => {
-  return payload => {
+const iceHandler = (peerConnection: RTCPeerConnection) => {
+  return (payload: wsPayload) => {
     const { iceCandidates: matchCandidates } = payload;
     matchCandidates.forEach(candidate => {
       peerConnection.addIceCandidate(candidate);
@@ -46,7 +47,7 @@ const createOffer = async () => {
     // assign a handler to addressing handshake
     wsOn('ice', iceHandler(peerConnection));
     // Respond if host answers our offer
-    wsOn('answer', payload => {
+    wsOn('answer', (payload: wsPayload) => {
       matchId = payload.matchId;
       peerConnection.setRemoteDescription(payload.sdp);
     });
@@ -73,8 +74,11 @@ const createRTC = async () => {
     // behavior upon receiving track
     peerConnection.ontrack = event => {
       // Attach stream event to an html element <audio> or <video>
+      const attachElement = mediaConfig.video
+        ? <HTMLVideoElement>document.getElementById('mediaStream')
+        : <HTMLAudioElement>document.getElementById('mediaStream');
       if (typeof document !== 'undefined') {
-        document.getElementById('mediaStream').srcObject = event.streams[0];
+        attachElement.srcObject = event.streams[0];
       }
     };
   } catch (error) {
@@ -186,7 +190,7 @@ const createRTC = async () => {
 // };
 
 // Creates a websocket handler for "offer" event
-const offerResponse = async payload => {
+const offerResponse = async (payload: wsPayload) => {
   try {
     const { sdp, matchId: ourMatch } = payload;
     matchId = ourMatch;

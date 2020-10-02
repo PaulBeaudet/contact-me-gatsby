@@ -1,9 +1,11 @@
 // media.ts Copyright 2020 Paul Beaudet MIT License
 import { mediaConfig } from '../config/communication';
 
-const getStream = async () => {
+const getStream = async (video = mediaConfig.video) => {
   if (typeof navigator !== 'undefined') {
     try {
+      // if we were passed a video option override it, other wise stick with default
+      mediaConfig.video = video;
       console.log(`trying to connect with video: ${mediaConfig.video}`);
       const stream = await navigator.mediaDevices.getUserMedia(mediaConfig);
       const audioTracks = stream.getAudioTracks();
@@ -15,11 +17,7 @@ const getStream = async () => {
       return stream;
     } catch (error) {
       console.log(`issue getting media stream: ${error} trying without video`);
-      if (mediaConfig.video) {
-        return;
-      }
-      mediaConfig.video = false;
-      return getStream();
+      return getStream(false);
     }
   }
 };

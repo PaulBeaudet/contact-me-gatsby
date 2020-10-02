@@ -10,6 +10,15 @@ const Authenticate = () => {
   const { state, dispatch } = useContext(GlobalUserContext);
   const { register, handleSubmit, errors, reset } = useForm();
 
+  const isHosting = (toggle: boolean) => {
+    return {
+      type: toggle ? 'HOST_ATTEMPT' : 'HOST_FAIL',
+      payload: {
+        host: toggle,
+      },
+    };
+  };
+
   useEffect(() => {
     setLStorage(loadStorage());
     wsOn('login', payload => {
@@ -24,13 +33,13 @@ const Authenticate = () => {
           },
         });
       } else {
-        dispatch({ type: 'HOST_FAIL' });
+        dispatch(isHosting(false));
         console.log('Oops something when wrong');
       }
     });
     wsOn('reject', payload => {
       console.dir(payload);
-      dispatch({ type: 'HOST_FAIL' });
+      dispatch(isHosting(false));
     });
     wsOn('fail', console.log);
   }, []);
@@ -42,7 +51,7 @@ const Authenticate = () => {
       password,
       oid: lStorage.read('oid'),
     });
-    dispatch({ type: 'HOST_ATTEMPT' });
+    dispatch(isHosting(true));
     reset();
   };
 
@@ -50,6 +59,10 @@ const Authenticate = () => {
     console.log(data);
     dispatch({
       type: 'LOG_OUT',
+      payload: {
+        host: false,
+        hostAvail: false,
+      },
     });
     reset();
   };

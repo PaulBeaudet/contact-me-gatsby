@@ -1,7 +1,10 @@
 // communication.ts Copyright 2020 Paul Beaudet MIT License
+// If env var for video is true set it that otherwise default false
+const useVideo: boolean =
+  process.env.GATSBY_USE_VIDEO === 'true' ? true : false;
 const mediaConfig = {
   audio: true,
-  video: true,
+  video: useVideo,
 };
 
 const configRTC = {

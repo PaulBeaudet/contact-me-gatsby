@@ -26,17 +26,6 @@ const RTC = () => {
   // };
   // ask and listen for host availability
   useEffect(() => {
-    wsSend('GetAvail');
-    wsOn('AVAIL', payload => {
-      const { avail } = payload;
-      dispatch({
-        type: 'HOST_AVAIL',
-        payload: {
-          hostAvail: avail,
-        },
-      });
-      //setAvailable(avail);
-    });
     wsOn('offer', payload => {
       console.log('getting an offer');
       offerResponse(payload);

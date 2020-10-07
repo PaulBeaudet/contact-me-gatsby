@@ -1,9 +1,13 @@
 import React, { createContext, useReducer } from 'react';
+import { initLS } from '../api/LocalStorage';
 import { GlobalContextType } from '../interfaces/global';
 import AppReducer from './AppReducer';
 
 // default user state to initiate with
-export const userState: GlobalContextType = {
+const userState: GlobalContextType = {
+  clientOid: '',
+  sessionOid: '',
+  lastSession: '',
   loggedIn: false,
   email: '',
   host: false,
@@ -11,17 +15,19 @@ export const userState: GlobalContextType = {
   hostAvail: false,
 };
 
+const persistentState = initLS(userState);
+
 interface props {
   children?: any;
 }
 // Create the context
-export const GlobalUserContext = createContext<GlobalContextType | any>(
-  userState
+const GlobalUserContext = createContext<GlobalContextType | any>(
+  persistentState
 );
 
 // Global state component that child components can derive context from
-export const GlobalUserProvider: React.FC<props> = ({ children }) => {
-  const [state, dispatch] = useReducer<any>(AppReducer, userState);
+const GlobalUserProvider: React.FC<props> = ({ children }) => {
+  const [state, dispatch] = useReducer<any>(AppReducer, persistentState);
 
   return (
     <GlobalUserContext.Provider value={{ state, dispatch }}>
@@ -29,3 +35,5 @@ export const GlobalUserProvider: React.FC<props> = ({ children }) => {
     </GlobalUserContext.Provider>
   );
 };
+
+export { GlobalUserContext, GlobalUserProvider, userState };

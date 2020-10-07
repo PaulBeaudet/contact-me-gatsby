@@ -13,6 +13,9 @@ export type MetaQuery = {
 };
 
 export interface GlobalContextType {
+  clientOid: string;
+  lastSession: string;
+  sessionOid: string;
   loggedIn: boolean;
   email: string;
   host: boolean;

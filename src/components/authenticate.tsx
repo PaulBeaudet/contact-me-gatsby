@@ -2,44 +2,33 @@ import React, { useState, useEffect, useContext } from 'react';
 import { GlobalUserContext } from '../context/GlobalState';
 import { useForm } from 'react-hook-form';
 import { wsSend, wsOn } from '../api/WebSocket';
-import { loadStorage, noStorage } from '../api/LocalStorage';
 
 const Authenticate = () => {
   const [showAuth, setShowAuth] = useState(false);
-  const [lStorage, setLStorage] = useState(noStorage);
   const { state, dispatch } = useContext(GlobalUserContext);
   const { register, handleSubmit, errors, reset } = useForm();
-
-  const isHosting = (toggle: boolean) => {
-    return {
-      type: toggle ? 'HOST_ATTEMPT' : 'HOST_FAIL',
-      payload: {
-        host: toggle,
-      },
-    };
-  };
+  const { loggedIn, sessionOid, lastSession, clientOid } = state;
 
   useEffect(() => {
-    setLStorage(loadStorage());
-    wsOn('login', payload => {
-      const { email } = payload;
-      if (email) {
-        lStorage.write({ ...payload });
-        dispatch({
-          type: 'SIGN_IN',
-          payload: {
-            loggedIn: true,
-            ...payload,
-          },
-        });
-      } else {
-        dispatch(isHosting(false));
-        console.log('Oops something when wrong');
-      }
+    wsOn('login', () => {
+      dispatch({
+        type: 'SIGN_IN',
+        payload: {
+          loggedIn: true,
+          host: true,
+          hostAvail: true,
+        },
+      });
     });
-    wsOn('reject', payload => {
-      console.dir(payload);
-      dispatch(isHosting(false));
+    wsOn('reject', () => {
+      dispatch({
+        type: 'REJECT',
+        payload: {
+          host: false,
+          loggedIn: false,
+          lastSession: '',
+        },
+      });
     });
     wsOn('fail', console.log);
   }, []);
@@ -49,9 +38,17 @@ const Authenticate = () => {
     wsSend('login', {
       email,
       password,
-      oid: lStorage.read('oid'),
+      thisSession: sessionOid,
+      lastSession,
+      clientOid,
     });
-    dispatch(isHosting(true));
+    dispatch({
+      type: 'HOST_ATTEMPT',
+      payload: {
+        host: true,
+        email,
+      },
+    });
     reset();
   };
 
@@ -67,7 +64,6 @@ const Authenticate = () => {
     reset();
   };
 
-  const { loggedIn } = state;
   const formAction = loggedIn ? logOutAction : logInAction;
   const formType: string = loggedIn ? 'Log-out' : 'Sign-in';
   // shows either sign in our log out options
@@ -87,7 +83,7 @@ const Authenticate = () => {
             <label>
               <span>Email: </span>
               <input
-                // type="email"
+                type="email"
                 name="email"
                 ref={register({
                   required: true,

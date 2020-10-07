@@ -18,7 +18,7 @@ const login = async event => {
     console.log(`login: No body!`);
     return _400();
   }
-  const { email, password } = data;
+  const { email, password, lastSession, thisSession } = data;
   try {
     const { collection, client, db } = await connectDB('users');
     const findResult = await collection.findOne({ email });
@@ -26,25 +26,45 @@ const login = async event => {
       console.log('could not find host?');
       return _400();
     }
-    const { passHash } = findResult;
-    const compare = await bcrypt.compare(password, passHash);
-    if (!compare) {
+    const { passHash, sessionHash } = findResult;
+    if (password && passHash) {
+      const compare = await bcrypt.compare(password, passHash);
+      if (!compare) {
+        client.close();
+        console.log('password hash no match');
+        respond(connectionId, 'reject', {}, event);
+        return _200();
+      }
+    } else if (lastSession && sessionHash) {
+      // or a valid last session information
+      // const clientCompare = await bcrypt.compare(clientOid, clientHash);
+      const sessionCompare = await bcrypt.compare(lastSession, sessionHash);
+      if (!sessionCompare) {
+        client.close();
+        console.log('session hash no match');
+        respond(connectionId, 'reject', {}, event);
+        return _200();
+      }
+    } else {
+      console.log('invalid pass creds or no creds in db');
+      respond(connectionId, 'reject', {}, event);
       client.close();
       return _200();
     }
     // broadcast availability to other clients given password checks out
-    broadcastAll(
-      connectionId,
-      'AVAIL',
-      { avail: true, hostId: connectionId },
-      event,
-      db
-    );
+    broadcastAll(connectionId, 'AVAIL', { avail: true }, event, db);
     // let user know they are logged in
-    respond(connectionId, 'login', { email }, event);
+    respond(connectionId, 'login', {}, event);
     // update user in database
     const filter = { email };
-    const update = updateDoc({ connectionId, avail: true });
+    // hash session id that can be logged in with next session
+    const salt = bcrypt.genSaltSync(10);
+    const hashSession = bcrypt.hashSync(thisSession, salt);
+    const update = updateDoc({
+      connectionId,
+      avail: true,
+      sessionHash: hashSession,
+    });
     const updateResult = await collection.updateOne(filter, update);
     if (updateResult && updateResult.modifiedCount) {
       console.log(`${email} successfully logged in`);

@@ -4,8 +4,7 @@
 # overwrite env vars for local testing
 export GATSBY_USE_VIDEO="true"
 # export GATSBY_WS_URL="ws://localhost:${PORT}"
-export GATSBY_WS_URL="wss://02c3d151d91a.ngrok.io "
-export GATSBY_CONTACT_API_URL="http://localhost:${PORT}/dm"
+export GATSBY_WS_URL="wss://4290a02f0bbd.ngrok.io"
 
 # Build client
 gatsby clean

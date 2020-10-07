@@ -19,11 +19,6 @@ const init = (onConnection: () => void = () => {}) => {
       instance.onclose = () => {
         instance = null;
       };
-      if (typeof window !== 'undefined') {
-        window.addEventListener('beforeunload', () => {
-          wsSend('disconnect');
-        });
-      }
       onConnection();
     };
   }
@@ -43,7 +38,7 @@ const handlers = [
 ];
 
 // shortcut for adding an event handler
-export const wsOn = (action: string, func: any) => {
+const wsOn = (action: string, func: any) => {
   handlers.push({ action, func });
 };
 
@@ -66,7 +61,7 @@ const incoming = (event: any) => {
 };
 
 // Outgoing socket messages from client
-export const wsSend = (action: string, json: any = {}) => {
+const wsSend = (action: string, json: any = {}) => {
   json.action = action;
   let msg = '{"action":"error","error":"failed stringify"}';
   try {
@@ -76,6 +71,9 @@ export const wsSend = (action: string, json: any = {}) => {
   }
   // create socket connection if its not yet connected
   init(() => {
+    // console.dir(instance);
     instance.send(msg);
   });
 };
+
+export { wsSend, wsOn };

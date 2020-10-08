@@ -21,6 +21,7 @@ export interface GlobalContextType {
   host: boolean;
   stream: any;
   hostAvail: boolean;
+  callInProgress: boolean;
 }
 
 export interface reducerActionType {

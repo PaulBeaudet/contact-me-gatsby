@@ -13,6 +13,7 @@ const userState: GlobalContextType = {
   host: false,
   stream: null,
   hostAvail: false,
+  callInProgress: false,
 };
 
 const persistentState = initLS(userState);

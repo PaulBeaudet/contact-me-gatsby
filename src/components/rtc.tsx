@@ -9,7 +9,7 @@ import { mediaConfig } from '../config/communication';
 
 const RTC = () => {
   const { state, dispatch } = useContext(GlobalUserContext);
-  const { host, hostAvail } = state;
+  const { host, hostAvail, callInProgress } = state;
 
   // const streamSetup = async () => {
   //   try {
@@ -27,8 +27,19 @@ const RTC = () => {
   // ask and listen for host availability
   useEffect(() => {
     wsOn('offer', payload => {
-      console.log('getting an offer');
-      offerResponse(payload);
+      offerResponse(payload)
+        .then(() => {
+          wsSend('SetAvail', { avail: false });
+          dispatch({
+            type: 'CALL_PROGRESS',
+            payload: {
+              callInProgress: true,
+            },
+          });
+        })
+        .catch(error => {
+          console.log(`call failed: ${error}`);
+        });
       // streamSetup()
       //   .then(stream => {
       //     const rtc = new rtcConnection(stream);
@@ -40,9 +51,19 @@ const RTC = () => {
   }, []);
 
   useEffect(() => {
-    if (!host && hostAvail) {
-      console.log('creating offer');
-      createOffer();
+    if (!host && hostAvail && !callInProgress) {
+      createOffer()
+        .then(() => {
+          dispatch({
+            type: 'CALL_PROGRESS',
+            payload: {
+              callInProgress: true,
+            },
+          });
+        })
+        .catch(error => {
+          console.log(`call failed: ${error}`);
+        });
       // streamSetup()
       //   .then(stream => {
       //     const rtc = new rtcConnection(stream);

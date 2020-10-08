@@ -44,6 +44,12 @@ functions:
     events:
       - websocket:
           route: GetAvail
+  SetAvail:
+    description: 'Allows host to set availability'
+    handler: api/availability.SetAvail
+    events:
+      - websocket:
+          route: SetAvail
   login:
     description: 'request to log into service'
     handler: api/authentication.login

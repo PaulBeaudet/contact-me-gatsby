@@ -11,20 +11,6 @@ const writeLS = (data: any) => {
   }
 };
 
-const readLS = (key: string) => {
-  if (typeof window !== 'undefined') {
-    return localStorage[key];
-  }
-};
-
-const readAllLS = () => {
-  if (typeof window !== 'undefined') {
-    return {
-      ...localStorage,
-    };
-  }
-};
-
 const initLS = state => {
   if (typeof window !== 'undefined') {
     if (!localStorage.clientOid) {
@@ -36,6 +22,7 @@ const initLS = state => {
       localStorage.stream = 'null';
       localStorage.host = 'false';
       localStorage.hostAvail = 'false';
+      localStorage.callInProgress = 'false';
       localStorage.lastSession = localStorage.sessionOid;
       localStorage.sessionOid = '';
     });

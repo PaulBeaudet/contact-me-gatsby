@@ -56,6 +56,12 @@ functions:
     events:
       - websocket:
           route: login
+  logout:
+    description: 'request for host to log out'
+    handler: api/authentication.logout
+    events:
+      - websocket:
+          route: logout
   ice:
     description: 'Exchange ice candidates'
     handler: api/WebRTC.ice

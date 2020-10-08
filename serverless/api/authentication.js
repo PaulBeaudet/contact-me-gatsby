@@ -78,6 +78,35 @@ const login = async event => {
 };
 // responds to all clients with availability if successful
 
+const logout = async event => {
+  const { connectionId } = event.requestContext;
+  try {
+    const { collection, client, db } = await connectDB('users');
+    // keep in mind server only knows connectionId
+    // and can relate it with the host
+    const result = await collection.findOneAndUpdate(
+      { connectionId },
+      updateDoc({
+        avail: false,
+        connectionId: '',
+        sessionHash: '',
+      })
+    );
+    if (!result) {
+      client.close();
+      console.log('not host or something');
+      return _200();
+    }
+    broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
+    client.close();
+    return _200();
+  } catch (error) {
+    console.log(error);
+    return _400();
+  }
+};
+
 module.exports = {
   login,
+  logout,
 };

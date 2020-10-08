@@ -52,13 +52,15 @@ const Authenticate = () => {
     reset();
   };
 
-  const logOutAction = data => {
-    console.log(data);
+  const logOutAction = () => {
+    wsSend('logout');
     dispatch({
       type: 'LOG_OUT',
       payload: {
         host: false,
         hostAvail: false,
+        loggedIn: false,
+        lastSession: '',
       },
     });
     reset();

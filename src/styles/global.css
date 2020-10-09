@@ -59,15 +59,6 @@ html {
   box-sizing: border-box;
   overflow-y: scroll;
 }
-* {
-  box-sizing: inherit;
-}
-*:before {
-  box-sizing: inherit;
-}
-*:after {
-  box-sizing: inherit;
-}
 body {
   color: hsla(0, 0%, 0%, 0.8);
   font-family: georgia, serif;

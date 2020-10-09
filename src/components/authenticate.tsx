@@ -82,37 +82,36 @@ const Authenticate = () => {
       <form onSubmit={handleSubmit(formAction)}>
         {!loggedIn && showAuth && (
           <>
-            <label>
-              <span>Email: </span>
-              <input
-                type="email"
-                name="email"
-                ref={register({
-                  required: true,
-                  // pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-                })}
-                placeholder="email"
-              />
-            </label>
+            <label>Email</label>
+            <input
+              name="email"
+              ref={register({
+                required: true,
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'invalid email address',
+                },
+              })}
+              placeholder="email"
+            />
             {errors.email && <span>required</span>}
-            <label>
-              <span>Password: </span>
-              <input
-                type="password"
-                name="password"
-                ref={register({
-                  required: true,
-                })}
-                placeholder="password"
-              />
-            </label>
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              ref={register({
+                required: true,
+              })}
+              placeholder="password"
+            />
             {errors.password && <span>required</span>}
           </>
         )}
         {showAuth && (
-          <label>
+          <>
+            <br />
             <input type="submit" className="button" value={formType} />
-          </label>
+          </>
         )}
       </form>
     </>

@@ -1,15 +1,13 @@
 {
   "name": "contact-me",
   "private": true,
-  "description": "Website for contacting me",
+  "description": "Landing page for contacting the host of the website",
   "version": "0.1.27",
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
     "aws-sdk": "^2.758.0",
     "bcryptjs": "^2.4.3",
     "express": "^4.17.1",
-    "firebase": "^7.21.0",
-    "firebaseui": "^4.6.1",
     "gatsby": "^2.24.63",
     "gatsby-cli": "^2.12.50",
     "gatsby-plugin-manifest": "^2.4.5",
@@ -23,7 +21,6 @@
     "mongodb": "^3.6.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-firebaseui": "^4.1.0",
     "react-helmet": "^6.0.0",
     "react-hook-form": "^5.7.2",
     "ws": "^7.3.1"
@@ -42,19 +39,19 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "gatsby build",
+    "build": "./build.sh",
     "develop": "gatsby develop",
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
-    "start": "npm run develop",
-    "serve": "gatsby serve",
+    "start": "./local_testing.sh",
+    "serve": "./serve.sh",
     "clean": "gatsby clean",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gatsbyjs/gatsby-starter-default"
+    "url": "https://github.com/PaulBeaudet/contact-me-gatsby"
   },
   "bugs": {
-    "url": "https://github.com/gatsbyjs/gatsby/issues"
+    "url": "https://github.com/PaulBeaudet/contact-me-gatsby/issues"
   }
 }

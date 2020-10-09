@@ -18,49 +18,43 @@ const Dm: React.FC = () => {
     <>
       {!submitted && (
         <form onSubmit={handleSubmit(onSubmit)}>
-          <label>
-            <span>Full name :</span>
-            <input
-              name="fullname"
-              ref={register({ required: true, pattern: /^[a-zA-Z\s]*$/ })}
-              placeholder="Actual Name"
-            />
-          </label>
-          {errors.fullname && (
-            <span>Fullname people would know you by is required</span>
-          )}
-          <label>
-            <span>Email: </span>
-            <input
-              name="contact"
-              ref={register({
-                required: true,
-                pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-              })}
-              placeholder="Where to respond"
-            />
-          </label>
-          {errors.contact && <span>Valid email is required to respond </span>}
-          <label>
-            <span>Message: </span>
-            <textarea
-              name="message"
-              ref={register({ required: true, minLength: 5, maxLength: 180 })}
-              placeholder="There is a character limit, we can talk more once we connect"
-            />
-          </label>
+          <label>Fullname</label>
+          <input
+            name="fullname"
+            ref={register({ required: true, pattern: /^[a-zA-Z\s]*$/ })}
+            placeholder="Fullname"
+          />
+          {errors.fullname && <p>Fullname is required</p>}
+          <label>Email</label>
+          <input
+            name="contact"
+            ref={register({
+              required: true,
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'invalid email address',
+              },
+            })}
+            placeholder="Email"
+          />
+          {errors.contact && <p>Valid email is required to respond </p>}
+          <label>Message</label>
+          <textarea
+            name="message"
+            ref={register({ required: true, minLength: 5, maxLength: 180 })}
+            placeholder="Message to leave"
+          />
           {errors.message && errors.message.type === 'required' && (
-            <span>A message would be helpful</span>
+            <p>Forgot your message</p>
           )}
           {errors.message && errors.message.type === 'maxLength' && (
-            <span>Too many characters, please keep it short and sweet</span>
+            <p>TL;DR, please keep it short and sweet</p>
           )}
           {errors.message && errors.message.type === 'minLength' && (
-            <span>Its okay to send more than a hi</span>
+            <p>Its okay to send more than a hi</p>
           )}
-          <label>
-            <input type="submit" className="button" value="Send Message" />
-          </label>
+          <br />
+          <input type="submit" className="button" value="Send Message" />
         </form>
       )}
       {submitted && <p>Thanks for the message</p>}

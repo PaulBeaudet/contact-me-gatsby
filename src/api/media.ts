@@ -5,9 +5,10 @@ const getStream = async (video = mediaConfig.video) => {
   if (typeof navigator !== 'undefined') {
     try {
       // if we were passed a video option override it, other wise stick with default
-      mediaConfig.video = video;
-      console.log(`trying to connect with video: ${mediaConfig.video}`);
-      const stream = await navigator.mediaDevices.getUserMedia(mediaConfig);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        ...mediaConfig,
+        video,
+      });
       const audioTracks = stream.getAudioTracks();
       if (!audioTracks.length) {
         throw new Error(`No audio tracks!`);

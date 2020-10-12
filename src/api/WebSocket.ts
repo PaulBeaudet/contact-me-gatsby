@@ -39,6 +39,16 @@ const handlers = [
 
 // shortcut for adding an event handler
 const wsOn = (action: string, func: any) => {
+  const found = handlers.find((handler, index)=>{
+    if(handler.action === action){
+      // overwrite current handler if it is assigned a subsequent time
+      handlers[index] = {action, func};
+      return true;
+    }
+  })
+  if(found){
+    return;
+  }
   handlers.push({ action, func });
 };
 

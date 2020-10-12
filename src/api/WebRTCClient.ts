@@ -1,5 +1,4 @@
 // WebRTCClient.ts Copyright 2020 Paul Beaudet MIT License
-import { type } from 'os';
 import { configRTC, mediaConfig, offerConfig } from '../config/communication';
 import { wsPayload } from '../interfaces/global';
 
@@ -17,7 +16,6 @@ class rtcConnection {
   iceCandidates: Array<any>;
   rtcPeer: RTCPeerConnection;
   onMatchAndIce: () => void;
-  // stateChange: (state: Event) => void;
   constructor() {
     if(typeof RTCPeerConnection !== 'undefined'){
       this.matchId = '';

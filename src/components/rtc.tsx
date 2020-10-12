@@ -44,17 +44,17 @@ const RTC = () => {
           console.log(`call failed: ${error}`);
         });
     }
-  }, [host, hostAvail]);
+  }, [hostAvail]);
 
   return (
     <div>
       {!mediaConfig.video && (
-        <audio id="mediaStream" autoPlay={true}>
+        <audio id="mediaStream" autoPlay={true} playsInline>
           unsupported
         </audio>
       )}
       {mediaConfig.video && (
-        <video id="mediaStream" autoPlay={true}>
+        <video id="mediaStream" autoPlay={true} playsInline>
           unsupported
         </video>
       )}

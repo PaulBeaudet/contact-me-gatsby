@@ -7,8 +7,8 @@ import { wsPayload } from '../interfaces/global';
 let matchId = '';
 
 // What to do with ice candidates
-const onIce = iceCandidates => {
-  return event => {
+const onIce = (iceCandidates: Array<any>) => {
+  return (event: RTCPeerConnectionIceEvent) => {
     // on address info being introspected (after local description is set)
     if (event.candidate) {
       // candidate property denotes data as multiple candidates can resolve
@@ -17,7 +17,6 @@ const onIce = iceCandidates => {
       // Absence of a candidate means a finished exchange
       // Send ice candidates to match once we have them all
       if (matchId) {
-        console.log(`sending ice candidates to ${matchId}`);
         wsSend('ice', { iceCandidates, matchId });
         // empty candidates once they are sent
         iceCandidates = [];
@@ -39,6 +38,13 @@ const iceHandler = (peerConnection: RTCPeerConnection) => {
     });
   };
 };
+
+let attachElement = {srcObject: null};
+if (typeof document !== 'undefined') {
+  attachElement = mediaConfig.video
+    ? <HTMLVideoElement>document.getElementById('mediaStream')
+    : <HTMLAudioElement>document.getElementById('mediaStream');
+}
 
 // makes an offer to connect
 const createOffer = async () => {
@@ -63,6 +69,17 @@ const createRTC = async () => {
   // verify media stream before calling
   const peerConnection = new RTCPeerConnection(configRTC);
   // create new instance for local client
+  // peerConnection.onconnectionstatechange = event => {
+  //   console.log(`connection state: ${event}`);
+  // };
+  // peerConnection.onsignalingstatechange = event => {
+  //   console.log(`Signaling state`);
+  //   console.dir(event);
+  // };
+  // peerConnection.oniceconnectionstatechange = event => {
+  //   console.log('ice connection change');
+  //   console.dir(event);
+  // }
   try {
     const mediaStream = await getStream();
     if (!mediaStream) {
@@ -74,12 +91,7 @@ const createRTC = async () => {
     // behavior upon receiving track
     peerConnection.ontrack = event => {
       // Attach stream event to an html element <audio> or <video>
-      const attachElement = mediaConfig.video
-        ? <HTMLVideoElement>document.getElementById('mediaStream')
-        : <HTMLAudioElement>document.getElementById('mediaStream');
-      if (typeof document !== 'undefined') {
-        attachElement.srcObject = event.streams[0];
-      }
+      attachElement.srcObject = event.streams[0];
     };
   } catch (error) {
     console.log(`createRTC, issue with stream: ${error}`);

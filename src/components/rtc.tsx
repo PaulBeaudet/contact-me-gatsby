@@ -1,9 +1,9 @@
 // rtcClient.tsx Copyright 2020 Paul Beaudet MIT Licence
 // Working rtc component
-import React, { useEffect, useContext, useState } from 'react';
+import React, { useEffect, useContext, useState} from 'react';
 import { wsOn, wsSend } from '../api/WebSocket';
 import { GlobalUserContext } from '../context/GlobalState';
-import { mediaConfig, configRTC, offerConfig, attachElement } from '../config/communication';
+import { mediaConfig, configRTC, offerConfig} from '../config/communication';
 import { wsPayload } from '../interfaces/global';
 import { getStream } from '../api/media';
 
@@ -28,7 +28,6 @@ const RTC = () => {
   const { host, hostAvail, callInProgress } = state;
   
   useEffect(()=>{
-    console.dir(iceCandidates);
     if(matchId && candidatesFound && iceCandidates){
       // Sent after local description is set
       // Basically when we know our match
@@ -56,7 +55,14 @@ const RTC = () => {
         .then(answer => {
           rtcPeer.setLocalDescription(answer)
             .then(()=>{
+              dispatch({
+                type: 'CALL_PROGRESS',
+                payload: {
+                  callInProgress: true,
+                },
+              });
               wsSend('answer', {sdp: answer, matchId: payload.matchId})
+              wsSend('SetAvail', {avail: false});
             })
         })
         .catch(console.log)
@@ -69,7 +75,6 @@ const RTC = () => {
     }
 
     const iceHandler = (payload: wsPayload) => {
-      console.dir(payload);
       payload.iceCandidates.forEach(candidate => {
         rtcPeer.addIceCandidate(candidate);
       });
@@ -113,9 +118,12 @@ const RTC = () => {
       rtcPeer.addTrack(track, ourStream);
     });
     // On track needs to be called after getTracks or no candidates will be generated
-    rtcPeer.ontrack = event => {
+    rtcPeer.ontrack = (event) => {
       // Attach stream event to an html element <audio> or <video>
-      attachElement.srcObject = event.streams[0];
+      if(typeof document !== 'undefined'){
+        const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
+        element.srcObject = event.streams[0];
+      }
     }
     setCallButtonState(callState.call);
   };
@@ -142,11 +150,17 @@ const RTC = () => {
   const endCall = () => {
     rtcPeer.close();
     setRtcPeer(null);
+    dispatch({
+      type: 'CALL_PROGRESS',
+      payload: {
+        callInProgress: false,
+      },
+    });
     setCallButtonState(callState.call);
   }
 
   // show elements when host is available or call is in progress
-  if ( true ){// hostAvail || callInProgress){
+  if ( hostAvail || callInProgress){
     return (
       <div>
         <button onClick={() => {

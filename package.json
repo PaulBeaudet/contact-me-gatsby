@@ -2,7 +2,7 @@
   "name": "contact-me",
   "private": true,
   "description": "Landing page for contacting the host of the website",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "author": "Paul Beaudet <inof8or@gmail.com>",
   "dependencies": {
     "aws-sdk": "^2.758.0",

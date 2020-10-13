@@ -5,6 +5,7 @@ const {
   _400,
   parseBody,
   broadcastAll,
+  send,
 } = require('./gatewaySocketAdapter');
 const { connectDB, updateDoc } = require('../db/mongo');
 
@@ -62,7 +63,35 @@ const SetAvail = async event => {
   }
 };
 
+const EndCall = async event => {
+  const { connectionId } = event.requestContext;
+  const { collection, client, db } = await connectDB('users');
+  const findResult = await collection.findOne({ $or: [{connectionId}, {matchId: connectionId}]});
+  if(!findResult){
+    client.close();
+    return _200();
+  }
+  const {matchId: guestId, connectionId: hostId } = findResult
+  if (hostId === connectionId){
+    send(guestId, 'EndCall', {}, event);
+  } else {
+    send(hostId, 'EndCall', {}, event);
+  }
+  const updateResult = await collection.updateOne(
+    {connectionId: hostId}, 
+    updateDoc({matchId: '', avail: true})
+  );
+  if(!updateResult){
+    client.close();
+    return _200();
+  }
+  broadcastAll(hostId, 'AVAIL', {avail: true}, event, db);
+  client.close();
+  return _200();
+}
+
 module.exports = {
   GetAvail,
   SetAvail,
+  EndCall,
 };

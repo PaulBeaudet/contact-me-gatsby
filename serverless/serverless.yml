@@ -50,6 +50,12 @@ functions:
     events:
       - websocket:
           route: SetAvail
+  EndCall:
+    description: 'Allows host or guest to end call'
+    handler: api/availability.EndCall
+    events:
+      - websocket:
+          route: EndCall
   login:
     description: 'request to log into service'
     handler: api/authentication.login

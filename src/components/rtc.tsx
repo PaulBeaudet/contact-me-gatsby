@@ -40,13 +40,6 @@ const RTC = () => {
     }
   }, [matchId, candidatesFound, iceCandidates]);
 
-  // Set rtcPeer on first component mount
-  useEffect(() => {
-    if(typeof RTCPeerConnection !== 'undefined' ){
-      setRtcPeer(new RTCPeerConnection(configRTC));
-    }
-  }, []);
-
   // Effect on rtc peer creation
   useEffect(()=>{
     const offerResponse = (payload: wsPayload) => {
@@ -62,7 +55,6 @@ const RTC = () => {
                 },
               });
               wsSend('answer', {sdp: answer, matchId: payload.matchId})
-              wsSend('SetAvail', {avail: false});
             })
         })
         .catch(console.log)
@@ -100,10 +92,12 @@ const RTC = () => {
           setCandidatesFound(true);
         }
       })
+    } else if (typeof RTCPeerConnection !== 'undefined'){
+      setRtcPeer(new RTCPeerConnection(configRTC));
     }
   }, [rtcPeer]);
 
-  const setUpMedia = async () => {
+  const setUpMedia = async (rtcObj) => {
     let ourStream = stream;
     if(!ourStream){
       try {
@@ -115,10 +109,10 @@ const RTC = () => {
       }
     }
     ourStream.getTracks().forEach(track => {
-      rtcPeer.addTrack(track, ourStream);
+      rtcObj.addTrack(track, ourStream);
     });
     // On track needs to be called after getTracks or no candidates will be generated
-    rtcPeer.ontrack = (event) => {
+    rtcObj.ontrack = (event) => {
       // Attach stream event to an html element <audio> or <video>
       if(typeof document !== 'undefined'){
         const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
@@ -149,15 +143,28 @@ const RTC = () => {
 
   const endCall = () => {
     rtcPeer.close();
-    setRtcPeer(null);
+    if(typeof document !== 'undefined'){
+      const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
+      element.srcObject = null;
+    }
+    wsSend('EndCall');
     dispatch({
       type: 'CALL_PROGRESS',
       payload: {
         callInProgress: false,
       },
     });
+    if (typeof RTCPeerConnection !== 'undefined'){
+      const newRtc = new RTCPeerConnection(configRTC);
+      setUpMedia(newRtc);
+      setRtcPeer(newRtc);
+    }
     setCallButtonState(callState.call);
   }
+
+  wsOn('EndCall', (payload: wsPayload)=>{
+    endCall();
+  });
 
   // show elements when host is available or call is in progress
   if ( hostAvail || callInProgress){
@@ -165,7 +172,7 @@ const RTC = () => {
       <div>
         <button onClick={() => {
           if(callButtonState === callState.setup){
-            setUpMedia();
+            setUpMedia(rtcPeer);
           } else if (callButtonState === callState.call){
             connectCall();
           } else if (callButtonState === callState.end){

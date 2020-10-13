@@ -1,6 +1,6 @@
 // WebRTC.js Copyright 2020 Paul Beaudet MIT License
-const { connectDB } = require('../db/mongo');
-const { parseBody, _400, send, _200 } = require('./gatewaySocketAdapter');
+const { connectDB, updateDoc } = require('../db/mongo');
+const { parseBody, _400, send, _200, broadcastAll } = require('./gatewaySocketAdapter');
 
 // lambda for exchanging ice candidates
 // Internet Connectivity Establishment (ICE)
@@ -73,18 +73,30 @@ const offer = async event => {
 // This completes the exchange of how clients will talk P2P
 // as described by exchanged SDP data.
 const answer = async event => {
+  const { connectionId } = event.requestContext;
   const body = parseBody(event.body);
   if (!body) {
     return _400();
   }
-  const { sdp, matchId: guestId } = body;
+  const { sdp, matchId } = body;
   // SDP needs to be exchanged
   // & host needs to know who to respond to
-  if (!sdp || !guestId) {
+  if (!sdp || !matchId) {
     return _400();
   }
-  const { connectionId: hostId } = event.requestContext;
-  send(guestId, 'answer', { sdp, matchId: hostId }, event);
+  send(matchId, 'answer', { sdp, matchId: connectionId }, event);
+  const { collection, client, db } = await connectDB('users');
+  const result = await collection.findOneAndUpdate(
+    { connectionId },
+    updateDoc({ avail: false, matchId })
+  );
+  if (!result) {
+    client.close();
+    console.log('not host or something');
+    return _200();
+  }
+  broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
+  client.close();
   return _200();
 };
 

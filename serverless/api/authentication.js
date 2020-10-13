@@ -20,7 +20,7 @@ const login = async event => {
   }
   const { email, password, lastSession, thisSession } = data;
   try {
-    const { collection, client, db } = await connectDB('users');
+    const { collection, client } = await connectDB('users');
     const findResult = await collection.findOne({ email });
     if (!findResult) {
       console.log('could not find host?');
@@ -52,7 +52,6 @@ const login = async event => {
       return _200();
     }
     // broadcast availability to other clients given password checks out
-    broadcastAll(connectionId, 'AVAIL', { avail: true }, event, db);
     // let user know they are logged in
     respond(connectionId, 'login', {}, event);
     // update user in database
@@ -62,7 +61,6 @@ const login = async event => {
     const hashSession = bcrypt.hashSync(thisSession, salt);
     const update = updateDoc({
       connectionId,
-      avail: true,
       sessionHash: hashSession,
     });
     const updateResult = await collection.updateOne(filter, update);

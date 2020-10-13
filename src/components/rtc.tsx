@@ -119,6 +119,9 @@ const RTC = () => {
         element.srcObject = event.streams[0];
       }
     }
+    if(host){
+      wsSend('SetAvail', {avail: true});
+    }
     setCallButtonState(callState.call);
   };
 
@@ -167,7 +170,7 @@ const RTC = () => {
   });
 
   // show elements when host is available or call is in progress
-  if ( hostAvail || callInProgress){
+  if ( hostAvail || callInProgress || host){
     return (
       <div>
         <button onClick={() => {

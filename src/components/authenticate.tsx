@@ -16,7 +16,6 @@ const Authenticate = () => {
         payload: {
           loggedIn: true,
           host: true,
-          hostAvail: true,
         },
       });
     });

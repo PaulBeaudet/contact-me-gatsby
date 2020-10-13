@@ -19,4 +19,11 @@ const offerConfig = {
   offerToReceiveVideo: mediaConfig.video,
 };
 
-export { configRTC, offerConfig, mediaConfig };
+let attachElement = {srcObject: null};
+if (typeof document !== 'undefined') {
+  attachElement = mediaConfig.video
+    ? <HTMLVideoElement>document.getElementById('mediaStream')
+    : <HTMLAudioElement>document.getElementById('mediaStream');
+}
+
+export { configRTC, offerConfig, mediaConfig, attachElement };

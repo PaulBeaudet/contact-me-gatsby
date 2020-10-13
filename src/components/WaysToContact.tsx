@@ -55,10 +55,10 @@ const WaysToContact = () => {
             : 'BUSY: Please leave a message'}
         </span>
       </h1>
+      <RTC />
       <Dm />
       <br />
       <Authenticate />
-      <RTC />
     </div>
   );
 };

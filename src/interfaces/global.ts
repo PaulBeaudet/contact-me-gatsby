@@ -19,7 +19,6 @@ export interface GlobalContextType {
   loggedIn: boolean;
   email: string;
   host: boolean;
-  stream: any;
   hostAvail: boolean;
   callInProgress: boolean;
 }

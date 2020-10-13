@@ -11,7 +11,6 @@ const userState: GlobalContextType = {
   loggedIn: false,
   email: '',
   host: false,
-  stream: null,
   hostAvail: false,
   callInProgress: false,
 };

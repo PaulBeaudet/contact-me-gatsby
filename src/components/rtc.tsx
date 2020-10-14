@@ -59,55 +59,47 @@ const RTC = () => {
 
   // Effect on rtc peer creation
   useEffect(()=>{
-    const offerResponse = (payload: wsPayload) => {
-      rtcPeer.setRemoteDescription(payload.sdp);
-      rtcPeer.createAnswer()
-        .then(answer => {
-          rtcPeer.setLocalDescription(answer)
-            .then(()=>{
-              dispatch({
-                type: 'CALL_PROGRESS',
-                payload: {
-                  callInProgress: true,
-                },
-              });
-              wsSend('answer', {sdp: answer, matchId: payload.matchId})
-              setCallButtonState(callState.end);
-            })
-        })
-        .catch(console.log)
+    const offerResponse = async (sdp, match) => {
+      rtcPeer.setRemoteDescription(sdp);
       setDescriptionRemote(true);
-      setMatchId(payload.matchId);
-    };
-
-    const receiveAnswer = (payload: wsPayload) => {
-      rtcPeer.setRemoteDescription(payload.sdp);
-      setDescriptionRemote(true);
-      setMatchId(payload.matchId);
-    }
-
-    const iceHandler = (payload: wsPayload) => {
-      setRemoteCandidates(payload.iceCandidates);
-      // payload.iceCandidates.forEach(candidate => {
-      //   rtcPeer.addIceCandidate(candidate);
-      // });
-    };
-
-    // What to do with ice candidates
-    const onIce = (event: RTCPeerConnectionIceEvent) => {
-      if (event.candidate) {
-        // sure we're supposed to send them candidate by candidate
-        // but thats a lot of lambda invocations
-        iceCandidates.push(event.candidate);
-        setIceCandidates(iceCandidates);
+      setMatchId(match);
+      try {
+        const answer = await rtcPeer.createAnswer();
+        await rtcPeer.setLocalDescription(answer);
+        dispatch({
+          type: 'CALL_PROGRESS',
+          payload: {
+            callInProgress: true,
+          },
+        });
+        wsSend('answer', {sdp: answer, matchId: match})
+        setCallButtonState(callState.end);
+      } catch (error){
+        console.log(`offer response error: ${error}`);
       }
     };
 
     if(rtcPeer){
-      wsOn('ice', iceHandler);
-      wsOn('offer', offerResponse);
-      wsOn('answer', receiveAnswer);
-      rtcPeer.onicecandidate = onIce;
+      wsOn('ice', (payload: wsPayload)=>{
+        setRemoteCandidates(payload.iceCandidates);
+      });
+      wsOn('offer', (payload: wsPayload) => {
+        offerResponse(payload.sdp, payload.matchId);
+      });
+      wsOn('answer', (payload: wsPayload)=>{
+        rtcPeer.setRemoteDescription(payload.sdp);
+        setDescriptionRemote(true);
+        setMatchId(payload.matchId);
+      });
+      // What to do with ice candidates
+      rtcPeer.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
+        if (event.candidate) {
+          // sure we're supposed to send them candidate by candidate
+          // but thats a lot of lambda invocations
+          iceCandidates.push(event.candidate);
+          setIceCandidates(iceCandidates);
+        }
+      };
       rtcPeer.addEventListener('icegatheringstatechange', event => {
         if(rtcPeer.iceGatheringState === 'complete'){
           setCandidatesFound(true);

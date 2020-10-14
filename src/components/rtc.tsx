@@ -18,6 +18,8 @@ const RTC = () => {
     'Connect call',
     'End call',
   ]
+  const hostCallState = [...callStateText];
+  hostCallState[callState.call] = 'Change Availability'
   const { state, dispatch } = useContext(GlobalUserContext);
   const [rtcPeer, setRtcPeer] = useState(null);
   const [matchId, setMatchId] = useState('');
@@ -55,6 +57,7 @@ const RTC = () => {
                 },
               });
               wsSend('answer', {sdp: answer, matchId: payload.matchId})
+              setCallButtonState(callState.end);
             })
         })
         .catch(console.log)
@@ -126,21 +129,19 @@ const RTC = () => {
   };
 
   const connectCall = async () => {
-    if (!host && hostAvail && !callInProgress) {
-      try {
-        const description = await rtcPeer.createOffer(offerConfig);
-        await rtcPeer.setLocalDescription(description);
-        wsSend('offer', {sdp: rtcPeer.localDescription});
-        dispatch({
-          type: 'CALL_PROGRESS',
-          payload: {
-            callInProgress: true,
-          },
-        });
-        setCallButtonState(callState.end);
-      } catch (error){
-        console.log(`call failed: ${error}`);
-      } 
+    try {
+      const description = await rtcPeer.createOffer(offerConfig);
+      await rtcPeer.setLocalDescription(description);
+      wsSend('offer', {sdp: rtcPeer.localDescription});
+      dispatch({
+        type: 'CALL_PROGRESS',
+        payload: {
+          callInProgress: true,
+        },
+      });
+      setCallButtonState(callState.end);
+    } catch (error){
+      console.log(`call failed: ${error}`);
     }
   }
 
@@ -169,20 +170,28 @@ const RTC = () => {
     endCall();
   });
 
+  const callButtonSwitch = () => {
+    if(callButtonState === callState.setup){
+      setUpMedia(rtcPeer);
+    } else if (callButtonState === callState.call){
+      if(host){
+        wsSend('SetAvail', {avail: !hostAvail});
+      } else if (hostAvail && !callInProgress){
+        connectCall();
+      } else {
+        console.log('connect button should probably be disabled');
+      }
+    } else if (callButtonState === callState.end){
+      endCall();
+    }
+  }
+
   // show elements when host is available or call is in progress
   if ( hostAvail || callInProgress || host){
     return (
       <div>
-        <button onClick={() => {
-          if(callButtonState === callState.setup){
-            setUpMedia(rtcPeer);
-          } else if (callButtonState === callState.call){
-            connectCall();
-          } else if (callButtonState === callState.end){
-            endCall();
-          }
-        }}>
-          {callStateText[callButtonState]}
+        <button onClick={callButtonSwitch}>
+          {host ? hostCallState[callButtonState]: callStateText[callButtonState]}
         </button>
         {!mediaConfig.video && (
           <audio id="mediaStream" autoPlay={true} playsInline>

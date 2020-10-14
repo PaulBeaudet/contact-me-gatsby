@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { GlobalUserContext } from '../context/GlobalState';
 import { useForm } from 'react-hook-form';
 import { wsSend, wsOn } from '../api/WebSocket';
 
 const Authenticate = () => {
-  const [showAuth, setShowAuth] = useState(false);
   const { state, dispatch } = useContext(GlobalUserContext);
   const { register, handleSubmit, errors, reset } = useForm();
-  const { loggedIn, sessionOid, lastSession, clientOid } = state;
+  const { loggedIn, sessionOid, lastSession, clientOid, email } = state;
 
   useEffect(() => {
     wsOn('login', () => {
@@ -18,7 +17,6 @@ const Authenticate = () => {
           host: true,
         },
       });
-      setShowAuth(true);
     });
     wsOn('reject', () => {
       dispatch({
@@ -31,6 +29,20 @@ const Authenticate = () => {
       });
     });
     wsOn('fail', console.log);
+    if (loggedIn) {
+      wsSend('login', {
+        clientOid,
+        lastSession,
+        thisSession: sessionOid,
+        email,
+      });
+      dispatch({
+        type: 'HOST_ATTEMPT',
+        payload: {
+          host: true,
+        },
+      });
+    }
   }, []);
 
   const logInAction = data => {
@@ -63,59 +75,46 @@ const Authenticate = () => {
         lastSession: '',
       },
     });
-    setShowAuth(false);
     reset();
   };
 
-  const formAction = loggedIn ? logOutAction : logInAction;
-  const formType: string = loggedIn ? 'Log-out' : 'Sign-in';
   // shows either sign in our log out options
-  return (
-    <>
-      {!loggedIn && <button
-        onClick={() => {
-          setShowAuth(!showAuth);
-        }}
-      >
-        {`Authentication options${showAuth ? ' -^' : ' -v'}`}
-      </button>}
-      <br />
-      <form onSubmit={handleSubmit(formAction)}>
-        {!loggedIn && showAuth && (
-          <>
-            <label>Email</label>
-            <input
-              name="email"
-              ref={register({
-                required: true,
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'invalid email address',
-                },
-              })}
-              placeholder="email"
-            />
-            {errors.email && <span>required</span>}
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              ref={register({
-                required: true,
-              })}
-              placeholder="password"
-            />
-            {errors.password && <span>required</span>}
-          </>
-        )}
-        {showAuth && (
-          <>
-            <br />
-            <input type="submit" className="button" value={formType} />
-          </>
-        )}
+  if(loggedIn){
+    return (
+      <form onSubmit={handleSubmit(logOutAction)}>
+        <br />
+        <button type="submit" className="button">Log-out</button>
       </form>
-    </>
+    )
+  }
+  return (
+    <form onSubmit={handleSubmit(logInAction)}>
+      <label>Email</label>
+      <input
+        name="email"
+        ref={register({
+          required: true,
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: 'invalid email address',
+          },
+        })}
+        placeholder="email"
+      />
+      {errors.email && <span>required</span>}
+      <label>Password</label>
+      <input
+        type="password"
+        name="password"
+        ref={register({
+          required: true,
+        })}
+        placeholder="password"
+      />
+      {errors.password && <span>required</span>}
+      <br />
+      <button type="submit" className="button">Sign-in</button>
+    </form>
   );
 };
 

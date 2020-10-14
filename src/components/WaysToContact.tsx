@@ -1,25 +1,19 @@
 // WaysToContact.tsx Copyright 2020 Paul Beaudet MIT Licence
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Dm from './dm';
 import Authenticate from './authenticate';
 import { GlobalUserContext } from '../context/GlobalState';
 import RTC from './rtc';
 import { wsSend, wsOn } from '../api/WebSocket';
+import { wsPayload } from '../interfaces/global';
 
 const WaysToContact = () => {
+  const [showDm, setShowDm] = useState(true);
   const { state, dispatch } = useContext(GlobalUserContext);
-  const {
-    hostAvail,
-    host,
-    loggedIn,
-    clientOid,
-    sessionOid,
-    lastSession,
-    email,
-  } = state;
+  const { hostAvail, loggedIn, callInProgress} = state;
 
   useEffect(() => {
-    wsOn('AVAIL', payload => {
+    wsOn('AVAIL', (payload: wsPayload) => {
       const { avail } = payload;
       dispatch({
         type: 'HOST_AVAIL',
@@ -28,24 +22,13 @@ const WaysToContact = () => {
         },
       });
     });
-    if (loggedIn) {
-      wsSend('login', {
-        clientOid,
-        lastSession,
-        thisSession: sessionOid,
-        email,
-      });
-      dispatch({
-        type: 'HOST_ATTEMPT',
-        payload: {
-          host: true,
-        },
-      });
-    } else {
+    if(!loggedIn) {
       wsSend('GetAvail');
     }
   }, []);
 
+  const showAuth: boolean = !showDm || loggedIn;
+  const dmShowing: boolean = !loggedIn && showDm && !callInProgress;
   return (
     <div className="basic-grey">
       <h1>
@@ -57,10 +40,19 @@ const WaysToContact = () => {
         </span>
       </h1>
       <RTC />
-      {!host && hostAvail && <p> - or message - </p>}
-      {!host && <Dm />}
+      {!loggedIn && hostAvail && <p> - or message - </p>}
+      {dmShowing && <Dm />}
+      {showAuth && <Authenticate />}
+      {!loggedIn && !hostAvail && !callInProgress && <>
       <br />
-      <Authenticate />
+      <button
+        onClick={() => {
+          setShowDm(!showDm);
+        }}
+      >
+        {showDm ? 'Sign-in view': 'Message view'}
+      </button>
+      </>}
     </div>
   );
 };

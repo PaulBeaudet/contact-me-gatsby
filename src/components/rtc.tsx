@@ -7,7 +7,7 @@ import { mediaConfig, configRTC, offerConfig} from '../config/communication';
 import { wsPayload } from '../interfaces/global';
 import { getStream } from '../api/media';
 
-const RTC = () => {
+const RTC: React.FC = () => {
   enum callState {
     setup,
     call,
@@ -195,27 +195,24 @@ const RTC = () => {
   }
 
   // show elements when host is available or call is in progress
-  if ( hostAvail || callInProgress || host){
-    return (
-      <div>
-        <button onClick={callButtonSwitch}>
-          {host ? hostCallState[callButtonState]: callStateText[callButtonState]}
-        </button>
-        {!mediaConfig.video && (
-          <audio id="mediaStream" autoPlay={true} playsInline>
-            unsupported
-          </audio>
-        )}
-        {mediaConfig.video && (
-          <video id="mediaStream" autoPlay={true} playsInline>
-            unsupported
-          </video>
-        )}
-      </div>
-    );
-  } else {
-    return null;
-  }
+  const showingRtcElements: boolean = hostAvail || callInProgress || host;
+  return (
+    <>
+      {showingRtcElements && <button onClick={callButtonSwitch} className="button">
+        {host ? hostCallState[callButtonState]: callStateText[callButtonState]}
+      </button>}
+      {!mediaConfig.video && showingRtcElements && (
+        <audio id="mediaStream" autoPlay={true} playsInline>
+          unsupported
+        </audio>
+      )}
+      {mediaConfig.video && showingRtcElements && (
+        <video id="mediaStream" autoPlay={true} playsInline>
+          unsupported
+        </video>
+      )}
+    </>
+  );
 }; // end of RTC function
 
 export default RTC;

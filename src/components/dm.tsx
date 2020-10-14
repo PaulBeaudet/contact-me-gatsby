@@ -1,3 +1,4 @@
+// dm.tsx Copyright 2020 Paul Beaudet MIT License
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { wsSend } from '../api/WebSocket';
@@ -54,7 +55,7 @@ const Dm: React.FC = () => {
             <p>Its okay to send more than a hi</p>
           )}
           <br />
-          <input type="submit" className="button" value="Send Message" />
+          <button type="submit" className="button">Send Message</button>
         </form>
       )}
       {submitted && <p>Thanks for the message</p>}

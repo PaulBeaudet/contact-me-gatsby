@@ -84,7 +84,6 @@ const answer = async event => {
   if (!sdp || !matchId) {
     return _400();
   }
-  send(matchId, 'answer', { sdp, matchId: connectionId }, event);
   const { collection, client, db } = await connectDB('users');
   const result = await collection.findOneAndUpdate(
     { connectionId },
@@ -95,6 +94,7 @@ const answer = async event => {
     console.log('not host or something');
     return _200();
   }
+  send(matchId, 'answer', { sdp, matchId: connectionId }, event);
   broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
   client.close();
   return _200();

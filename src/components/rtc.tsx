@@ -26,14 +26,29 @@ const RTC = () => {
   const [iceCandidates, setIceCandidates] = useState([]);
   const [candidatesFound, setCandidatesFound] = useState(false);
   const [stream, setStream] = useState(null);
+  const [descriptionRemote, setDescriptionRemote ] = useState(false);
+  const [remoteCandidates, setRemoteCandidates] = useState([])
   const [callButtonState, setCallButtonState] = useState(callState.setup)
   const { host, hostAvail, callInProgress } = state;
   
+  // Remote ICE should only be added after a remote description is set
+  useEffect(()=>{
+    // keep in mind one candidate would be the terminating one anyhow
+    if(descriptionRemote && remoteCandidates.length > 1){
+      remoteCandidates.forEach(candidate => {
+        rtcPeer.addIceCandidate(candidate);
+      });
+      setRemoteCandidates([]);
+      setDescriptionRemote(false);
+    }
+  }, [descriptionRemote, remoteCandidates, rtcPeer])
+
+  // Local ice should only be sent after a local description is set 
+  // or more accurately when we know of the match id
+  // In the guest case they've set local desc, 
+  // but don't know who to send to until answer is received
   useEffect(()=>{
     if(matchId && candidatesFound && iceCandidates){
-      // Sent after local description is set
-      // Basically when we know our match
-      // and candidates can be and were generated
       wsSend('ice', { iceCandidates, matchId });
       // reset candidates found and ice candidates
       setCandidatesFound(false);
@@ -61,18 +76,21 @@ const RTC = () => {
             })
         })
         .catch(console.log)
+      setDescriptionRemote(true);
       setMatchId(payload.matchId);
     };
 
     const receiveAnswer = (payload: wsPayload) => {
       rtcPeer.setRemoteDescription(payload.sdp);
+      setDescriptionRemote(true);
       setMatchId(payload.matchId);
     }
 
     const iceHandler = (payload: wsPayload) => {
-      payload.iceCandidates.forEach(candidate => {
-        rtcPeer.addIceCandidate(candidate);
-      });
+      setRemoteCandidates(payload.iceCandidates);
+      // payload.iceCandidates.forEach(candidate => {
+      //   rtcPeer.addIceCandidate(candidate);
+      // });
     };
 
     // What to do with ice candidates
@@ -166,9 +184,7 @@ const RTC = () => {
     setCallButtonState(callState.call);
   }
 
-  wsOn('EndCall', (payload: wsPayload)=>{
-    endCall();
-  });
+  wsOn('EndCall', endCall);
 
   const callButtonSwitch = () => {
     if(callButtonState === callState.setup){
@@ -208,7 +224,6 @@ const RTC = () => {
   } else {
     return null;
   }
-
 }; // end of RTC function
 
 export default RTC;

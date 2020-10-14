@@ -10,6 +10,7 @@ const WaysToContact = () => {
   const { state, dispatch } = useContext(GlobalUserContext);
   const {
     hostAvail,
+    host,
     loggedIn,
     clientOid,
     sessionOid,
@@ -51,12 +52,13 @@ const WaysToContact = () => {
         {` Contact - ${process.env.GATSBY_SITE_AUTHOR}`}
         <span>
           {hostAvail
-            ? 'ONLINE: Leave a message or allow microphone to talk'
+            ? 'ONLINE: Call or leave a message'
             : 'BUSY: Please leave a message'}
         </span>
       </h1>
       <RTC />
-      <Dm />
+      {!host && hostAvail && <p> - or message - </p>}
+      {!host && <Dm />}
       <br />
       <Authenticate />
     </div>

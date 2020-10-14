@@ -18,6 +18,7 @@ const Authenticate = () => {
           host: true,
         },
       });
+      setShowAuth(true);
     });
     wsOn('reject', () => {
       dispatch({
@@ -62,6 +63,7 @@ const Authenticate = () => {
         lastSession: '',
       },
     });
+    setShowAuth(false);
     reset();
   };
 
@@ -70,13 +72,13 @@ const Authenticate = () => {
   // shows either sign in our log out options
   return (
     <>
-      <button
+      {!loggedIn && <button
         onClick={() => {
           setShowAuth(!showAuth);
         }}
       >
         {`Authentication options${showAuth ? ' -^' : ' -v'}`}
-      </button>
+      </button>}
       <br />
       <form onSubmit={handleSubmit(formAction)}>
         {!loggedIn && showAuth && (

@@ -1,0 +1,28 @@
+{
+  "name": "contact_service",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Collection of websocket endpoints to negotiate contact service connections",
+  "main": "monolithic_server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Paul Beaudet",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.771.0",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.17.1",
+    "https": "^1.0.0",
+    "js-yaml": "^3.14.0",
+    "mongodb": "^3.6.2",
+    "ws": "^7.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PaulBeaudet/contact-me-gatsby"
+  },
+  "bugs": {
+    "url": "https://github.com/PaulBeaudet/contact-me-gatsby/issues"
+  }
+}

@@ -1,11 +1,10 @@
-service: contactRelayMessage
+service: contactDeabute
 
 package:
   exclude:
-    - ./**
+    - ./monolithic_server.js
   include:
-    - ./relay.js
-    - ./apiGateway/DefaultSockets.js
+    - ./**
 
 provider:
   name: aws
@@ -18,6 +17,14 @@ provider:
     DM_WH: ${env:DM_WH}
     ENDPOINT_ROUTE: ${env:ENDPOINT_ROUTE}
     HOST_EMAIL: ${env:HOST_EMAIL}
+    DB_NAME: ${env:DB_NAME}
+    MONGODB_URI: ${env:MONGODB_URI}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "execute-api:ManageConnections"
+      Resource:
+        - "arn:aws:execute-api:*:*:**/@connections/*"
 
 functions:
   connect:

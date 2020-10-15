@@ -1,7 +1,7 @@
 #!/bin/bash
 . ./personal.sh # Load private configuration
 
-Build 
+# Build static website
 gatsby clean
 gatsby build
 
@@ -28,8 +28,11 @@ echo "done syncing"
 # aws cloudfront create-distribution --distribution-config file://distconfig.json
 
 # Make sure a route 53 route is set point at the cloudfront distribution
+# aws route53 list-resource-record-sets --hosted-zone-id "hosted-zone-id"
+# list current record sets to get an idea about how to configure a new one
+# aws route53 change-resource-record-sets --hosted-zone-id "/hostedzone/hostedzoneid" --change-batch file://dnsRecords.json
 
 # deploy sereverless functions assosiated with this app
-# cd serverless/
-# serverless deploy --aws-profile deabute
-# echo "Done deploying serverless functions"
+cd serverless/
+serverless deploy --aws-profile deabute
+echo "Done deploying serverless functions"

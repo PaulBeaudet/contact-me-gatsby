@@ -75,3 +75,4 @@ personal.sh
 bucket_policy.json
 distribution-config.json
 distconfig.json
+dnsRecords.json

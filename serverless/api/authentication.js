@@ -32,7 +32,7 @@ const login = async event => {
       if (!compare) {
         client.close();
         console.log('password hash no match');
-        respond(connectionId, 'reject', {}, event);
+        await respond(connectionId, 'reject', {}, event);
         return _200();
       }
     } else if (lastSession && sessionHash) {
@@ -42,18 +42,23 @@ const login = async event => {
       if (!sessionCompare) {
         client.close();
         console.log('session hash no match');
-        respond(connectionId, 'reject', {}, event);
+        await respond(connectionId, 'reject', {}, event);
         return _200();
       }
     } else {
       console.log('invalid pass creds or no creds in db');
-      respond(connectionId, 'reject', {}, event);
       client.close();
+      await respond(connectionId, 'reject', {}, event);
       return _200();
     }
     // broadcast availability to other clients given password checks out
     // let user know they are logged in
-    respond(connectionId, 'login', {}, event);
+    const sent = await respond(connectionId, 'login', {}, event);
+    if(!sent){
+      client.close();
+      console.log('could not respond to client');
+      return _200();
+    }
     // update user in database
     const filter = { email };
     // hash session id that can be logged in with next session
@@ -95,7 +100,7 @@ const logout = async event => {
       console.log('not host or something');
       return _200();
     }
-    broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
+    await broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
     client.close();
     return _200();
   } catch (error) {

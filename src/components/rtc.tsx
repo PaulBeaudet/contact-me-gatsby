@@ -12,14 +12,16 @@ const RTC: React.FC = () => {
     setup,
     call,
     end,
+    here,
+    away,
   }
   const callStateText = [
     'Setup call',
     'Connect call',
     'End call',
+    'Set as Available',
+    'Set Away',
   ]
-  const hostCallState = [...callStateText];
-  hostCallState[callState.call] = 'Change Availability'
   const { state, dispatch } = useContext(GlobalUserContext);
   const [rtcPeer, setRtcPeer] = useState(null);
   const [matchId, setMatchId] = useState('');
@@ -132,10 +134,6 @@ const RTC: React.FC = () => {
         element.srcObject = event.streams[0];
       }
     }
-    if(host){
-      wsSend('SetAvail', {avail: true});
-    }
-    setCallButtonState(callState.call);
   };
 
   const connectCall = async () => {
@@ -149,7 +147,6 @@ const RTC: React.FC = () => {
           callInProgress: true,
         },
       });
-      setCallButtonState(callState.end);
     } catch (error){
       console.log(`call failed: ${error}`);
     }
@@ -161,7 +158,6 @@ const RTC: React.FC = () => {
       const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
       element.srcObject = null;
     }
-    wsSend('EndCall');
     dispatch({
       type: 'CALL_PROGRESS',
       payload: {
@@ -173,24 +169,34 @@ const RTC: React.FC = () => {
       setUpMedia(newRtc);
       setRtcPeer(newRtc);
     }
-    setCallButtonState(callState.call);
   }
 
-  wsOn('EndCall', endCall);
+  wsOn('EndCall', ()=> {
+    endCall();
+    setCallButtonState(host ? callState.here: callState.call);
+  });
 
   const callButtonSwitch = () => {
     if(callButtonState === callState.setup){
       setUpMedia(rtcPeer);
+      setCallButtonState(host ? callState.here : callState.call);
     } else if (callButtonState === callState.call){
-      if(host){
-        wsSend('SetAvail', {avail: !hostAvail});
-      } else if (hostAvail && !callInProgress){
+      if (hostAvail && !callInProgress){
         connectCall();
+        setCallButtonState(callState.end);
       } else {
         console.log('connect button should probably be disabled');
       }
     } else if (callButtonState === callState.end){
+      wsSend('EndCall');
       endCall();
+      setCallButtonState(callState.call);
+    } else if (callButtonState === callState.here){
+      wsSend('SetAvail', {avail: true});
+      setCallButtonState(callState.away);
+    } else if (callButtonState === callState.away){
+      wsSend('SetAvail', {avail: false});
+      setCallButtonState(callState.here);
     }
   }
 
@@ -199,7 +205,7 @@ const RTC: React.FC = () => {
   return (
     <>
       {showingRtcElements && <button onClick={callButtonSwitch} className="button">
-        {host ? hostCallState[callButtonState]: callStateText[callButtonState]}
+        {callStateText[callButtonState]}
       </button>}
       {!mediaConfig.video && showingRtcElements && (
         <audio id="mediaStream" autoPlay={true} playsInline>

@@ -31,7 +31,7 @@ const disconnect = async event => {
     const updateResult = await usersCollection.updateOne(filter, update);
     if (updateResult && updateResult.modifiedCount) {
       // Let other clients know that host is offline
-      broadcast(connectionId, 'AVAIL', { avail: false, hostId: '' }, event, db);
+      await broadcast(connectionId, 'AVAIL', { avail: false, hostId: '' }, event, db);
       console.log(`host updated to unavailable`);
     }
     client.close();

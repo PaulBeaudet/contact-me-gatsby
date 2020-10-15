@@ -63,7 +63,7 @@ const convertMsg = (action, msgObj) => {
   return msg;
 };
 
-const sendTo = (oid, action, msgObj = {}, event) => {
+const sendTo = async (oid, action, msgObj = {}, event) => {
   console.log(
     `sending event initialized by ${event.requestContext.connectionId}`
   );
@@ -73,10 +73,11 @@ const sendTo = (oid, action, msgObj = {}, event) => {
       client.send(msg);
     }
   });
+  return true;
 };
 
 // broadcast to everyone except for connection that initialized
-const broadcast = (oid, action, msgObj = {}, event) => {
+const broadcast = async (oid, action, msgObj = {}, event) => {
   // TODO use db to keep track of monolith clients
   console.log(
     `broadcast event initialized by ${event.requestContext.connectionId}`
@@ -87,16 +88,30 @@ const broadcast = (oid, action, msgObj = {}, event) => {
       client.send(msg);
     }
   });
+  return true;
 };
 
-const broadcastAll = (oid, action, msgObj = {}, event) => {
+const broadcastAll = async(oid, action, msgObj = {}, event) => {
   const msg = convertMsg(action, msgObj);
   socket.server.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(msg);
     }
   });
+  return true;
 };
+
+const makeResponse = ws => {
+  return async (oid, action, msgObj = {}) => {
+    console.log(`Responding to ${oid} with: ${action}`);
+    const msg = convertMsg(action, msgObj);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(msg);
+      return true;
+    }
+    return false;
+  };
+}
 
 const socket = {
   server: null,
@@ -108,7 +123,7 @@ const socket = {
     socket.server.on('connection', ws => {
       // connection information to hold in memory or persistently
       const connectionId = createOid();
-      const respond = socket.send(ws);
+      const respond = makeResponse(ws);
       // Emulate connect event in api gateway
       const gwEvent = {
         requestContext: {
@@ -133,15 +148,6 @@ const socket = {
         });
       });
     });
-  },
-  send: ws => {
-    return (oid, action, msgObj = {}) => {
-      console.log(`Responding to ${oid} with: ${action}`);
-      const msg = convertMsg(action, msgObj);
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(msg);
-      }
-    };
   },
   on: (action, func) => {
     socket.handlers.push({ action, func });

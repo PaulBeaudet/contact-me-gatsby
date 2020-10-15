@@ -14,8 +14,8 @@ const ice = async event => {
   if (!iceCandidates || !matchId) {
     return _400();
   }
-  send(matchId, 'ice', { iceCandidates }, event);
-  return _200();
+  const sent = await send(matchId, 'ice', { iceCandidates }, event);
+  return sent ? _200() : _400();
 };
 
 // lambda for making WebRTC offers to another user
@@ -59,10 +59,10 @@ const offer = async event => {
       return _400();
     }
     // Send this offer to the host from the guest
-    send(hostId, 'offer', { sdp, matchId: guestId }, event);
+    const sent = await send(hostId, 'offer', { sdp, matchId: guestId }, event);
     console.log(`sent offer to ${hostId}`);
     client.close();
-    return _200();
+    return sent ? _200() : _400();
   } catch (error) {
     console.log(`Issue with offer: ${error}`);
   }
@@ -94,10 +94,10 @@ const answer = async event => {
     console.log('not host or something');
     return _200();
   }
-  send(matchId, 'answer', { sdp, matchId: connectionId }, event);
-  broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
+  const sent = await send(matchId, 'answer', { sdp, matchId: connectionId }, event);
+  const cast = await broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
   client.close();
-  return _200();
+  return sent && cast ? _200() : _400();
 };
 
 module.exports = {

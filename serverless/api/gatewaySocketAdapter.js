@@ -5,23 +5,28 @@ require('aws-sdk/clients/apigatewaymanagementapi');
 
 // default to creating api gateway responses
 let send = (ConnectionId, action, jsonData, event) => {
-  const gateway = new AWS.ApiGatewayManagementApi({
-    apiVersion: '2018-11-29',
-    endpoint: `${event.requestContext.domainName}${process.env.ENDPOINT_ROUTE}`,
-  });
-  jsonData.action = action;
-  const Data = JSON.stringify(jsonData);
-  gateway.postToConnection(
-    {
-      ConnectionId,
-      Data,
-    },
-    error => {
-      if (error) {
-        console.log(`issue sending to ${ConnectionId}`);
+  return new Promise((resolve, reject) => {
+    const fullEndpoint = `${event.requestContext.domainName}${process.env.ENDPOINT_ROUTE}`
+    const gateway = new AWS.ApiGatewayManagementApi({
+      apiVersion: '2018-11-29',
+      endpoint: fullEndpoint,
+    });
+    jsonData.action = action;
+    const Data = JSON.stringify(jsonData);
+    gateway.postToConnection({ConnectionId, Data}, error =>{
+      if (error){
+        if (error.statusCode === 410){
+          console.log('1: skipping client thats no longer here');
+          resolve(true);
+        } else {
+          console.log(`error sending api message ${error}`);
+          reject(error);
+        }
+      } else {
+        resolve(true);
       }
-    }
-  );
+    });
+  });
 };
 
 // As far as API Gateway is concerned respond and send are the same thing
@@ -30,25 +35,33 @@ let respond = send;
 
 // ways to broadcast with a lambda functions
 let broadcast = async (ConnectionId, action, jsonData, event, db) => {
-  const onClient = client => {
-    if (client.connectionId === ConnectionId) {
-      return;
-    }
-    send(client.connectionId, action, jsonData, event);
-  };
   try {
-    await db.collection('socketPool').find(onClient);
+    // For every participant in the socket pool 
+    const cursor = db.collection('socketPool').find({});
+    await cursor.forEach(async client => {
+      if (client.connectionId === ConnectionId){return;} 
+      try {
+        await send(client.connectionId, action, jsonData, event);
+      } catch (error){
+        console.log(error);
+      }
+    })
   } catch (error) {
     console.log(error);
   }
 };
 
 let broadcastAll = async (ConnectionId, action, jsonData, event, db) => {
-  const onClient = client => {
-    send(client.connectionId, action, jsonData, event);
-  };
   try {
-    await db.collection('socketPool').find(onClient);
+    // For every participant in the socket pool 
+    const cursor = db.collection('socketPool').find({});
+    await cursor.forEach(async client => {
+      try {
+        await send(client.connectionId, action, jsonData, event);
+      } catch (error){
+        console.log(error);
+      }
+    })
   } catch (error) {
     console.log(error);
   }

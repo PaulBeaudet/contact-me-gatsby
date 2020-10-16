@@ -1,6 +1,6 @@
 // authentication.js Copyright 2020 Paul Beaudet MIT License
 const {
-  respond,
+  send,
   _200,
   parseBody,
   _400,
@@ -20,7 +20,7 @@ const login = async event => {
   }
   const { email, password, lastSession, thisSession } = data;
   try {
-    const { collection, client } = await connectDB('users');
+    const { collection, client, db } = await connectDB('users');
     const findResult = await collection.findOne({ email });
     if (!findResult) {
       console.log('could not find host?');
@@ -30,9 +30,9 @@ const login = async event => {
     if (password && passHash) {
       const compare = await bcrypt.compare(password, passHash);
       if (!compare) {
-        client.close();
         console.log('password hash no match');
-        await respond(connectionId, 'reject', {}, event);
+        await send(connectionId, 'reject', {}, event, db);
+        client.close();
         return _200();
       }
     } else if (lastSession && sessionHash) {
@@ -40,25 +40,20 @@ const login = async event => {
       // const clientCompare = await bcrypt.compare(clientOid, clientHash);
       const sessionCompare = await bcrypt.compare(lastSession, sessionHash);
       if (!sessionCompare) {
-        client.close();
         console.log('session hash no match');
-        await respond(connectionId, 'reject', {}, event);
+        await send(connectionId, 'reject', {}, event, db);
+        client.close();
         return _200();
       }
     } else {
       console.log('invalid pass creds or no creds in db');
+      await send(connectionId, 'reject', {}, event, db);
       client.close();
-      await respond(connectionId, 'reject', {}, event);
       return _200();
     }
     // broadcast availability to other clients given password checks out
     // let user know they are logged in
-    const sent = await respond(connectionId, 'login', {}, event);
-    if(!sent){
-      client.close();
-      console.log('could not respond to client');
-      return _200();
-    }
+    await send(connectionId, 'login', {}, event, db);
     // update user in database
     const filter = { email };
     // hash session id that can be logged in with next session
@@ -71,9 +66,9 @@ const login = async event => {
     const updateResult = await collection.updateOne(filter, update);
     if (updateResult && updateResult.modifiedCount) {
       console.log(`${email} successfully logged in`);
-      client.close();
-      return _200();
     }
+    client.close();
+    return _200();
   } catch (error) {
     console.log(error);
     return _400();

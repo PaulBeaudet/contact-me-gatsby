@@ -1,6 +1,5 @@
 // availability.js Copyright 2020 Paul Beaudet MIT License
 const {
-  respond,
   _200,
   _400,
   parseBody,
@@ -14,18 +13,18 @@ const GetAvail = async event => {
   const { connectionId } = event.requestContext;
   // -- look up if host is available in db -
   try {
-    const { collection, client } = await connectDB('users');
+    const { collection, client, db } = await connectDB('users');
     const findResult = await collection.findOne({
       email: process.env.HOST_EMAIL,
     });
-    client.close();
     // no result give up
     if (!findResult) {
       return _400();
     }
     const { avail, connectionId: hostId } = findResult;
     // Respond to requesting client with host availability
-    const sent = await respond(connectionId, 'AVAIL', { avail, hostId }, event);
+    const sent = await send(connectionId, 'AVAIL', { avail, hostId }, event, db);
+    client.close();
     return sent ? _200(): _400();
   } catch (error) {
     console.log(error);
@@ -53,9 +52,9 @@ const SetAvail = async event => {
       console.log('not host or something');
       return _200();
     }
-    const cast = await broadcastAll(connectionId, 'AVAIL', { avail }, event, db);
+    await broadcastAll(connectionId, 'AVAIL', { avail }, event, db);
     client.close();
-    return cast ? _200() : _400();
+    return _200();
   } catch (error) {
     console.log(error);
     return _400();
@@ -64,31 +63,20 @@ const SetAvail = async event => {
 
 const EndCall = async event => {
   const { connectionId } = event.requestContext;
-  const { collection, client } = await connectDB('users');
+  const { collection, client, db} = await connectDB('users');
   const findResult = await collection.findOne({ $or: [{connectionId}, {matchId: connectionId}]});
   if(!findResult){
     client.close();
     return _200();
   }
   const {matchId: guestId, connectionId: hostId } = findResult
-  let sent = null;
   if (hostId === connectionId){
-    sent = await send(guestId, 'EndCall', {}, event);
+    await send(guestId, 'EndCall', {}, event, db);
   } else {
-    sent = await send(hostId, 'EndCall', {}, event);
+    await send(hostId, 'EndCall', {}, event, db);
   }
-  // update host if this would automatically set them to available
-  // const updateResult = await collection.updateOne(
-  //   {connectionId: hostId}, 
-  //   updateDoc({matchId: '', avail: true})
-  // );
-  // if(!updateResult || !sent){
-  //   client.close();
-  //   return _200();
-  // }
-  // const cast = await broadcastAll(hostId, 'AVAIL', {avail: true}, event, db);
   client.close();
-  return sent ? _200() : _400();
+  return _200();
 }
 
 module.exports = {

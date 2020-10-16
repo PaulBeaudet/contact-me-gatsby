@@ -192,10 +192,10 @@ const RTC: React.FC = () => {
       endCall();
       setCallButtonState(callState.call);
     } else if (callButtonState === callState.here){
-      wsSend('SetAvail', {avail: true});
+      wsSend('SetAvail', {avail: false});
       setCallButtonState(callState.away);
     } else if (callButtonState === callState.away){
-      wsSend('SetAvail', {avail: false});
+      wsSend('SetAvail', {avail: true});
       setCallButtonState(callState.here);
     }
   }

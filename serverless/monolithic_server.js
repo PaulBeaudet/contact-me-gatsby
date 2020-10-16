@@ -25,32 +25,12 @@ const createOid = () => {
   );
 };
 
-// use an in memory array when no db is available
-let wsConnections = [];
-
 // placeholder methods can be over written by serverless forFunctions
 const gatewayWs = {
-  connect: async event => {
-    console.log(event);
-    const { connectionId, responseFunc } = event.requestContext;
-    wsConnections.push({
-      connectionId,
-      responseFunc,
-    });
-  },
-  disconnect: async event => {
-    // console.dir(event);
-    // reconstruct connection array without this client's connection
-    const { connectionId } = event.requestContext;
-    wsConnections = wsConnections.filter(
-      connection => connection.connectionId !== connectionId
-    );
-  },
-  default: async event => {
-    // route has yet to be created
-    console.dir(event);
-  },
-};
+  connect: ()=>{},
+  disconnect: ()=>{},
+  default: ()=>{},
+}
 
 const convertMsg = (action, msgObj) => {
   msgObj.action = action;
@@ -63,13 +43,10 @@ const convertMsg = (action, msgObj) => {
   return msg;
 };
 
-const sendTo = async (oid, action, msgObj = {}, event) => {
-  console.log(
-    `sending event initialized by ${event.requestContext.connectionId}`
-  );
+const sendTo = async (connectionId, action, msgObj = {}) => {
   const msg = convertMsg(action, msgObj);
   socket.server.clients.forEach(client => {
-    if (client.connectionId === oid && client.readyState === WebSocket.OPEN) {
+    if (client.connectionId === connectionId && client.readyState === WebSocket.OPEN) {
       client.send(msg);
     }
   });
@@ -77,41 +54,37 @@ const sendTo = async (oid, action, msgObj = {}, event) => {
 };
 
 // broadcast to everyone except for connection that initialized
-const broadcast = async (oid, action, msgObj = {}, event) => {
+const broadcast = async (connectionId, action, msgObj = {}) => {
   // TODO use db to keep track of monolith clients
-  console.log(
-    `broadcast event initialized by ${event.requestContext.connectionId}`
-  );
+  console.log(`broadcast from ${connectionId}`);
   const msg = convertMsg(action, msgObj);
   socket.server.clients.forEach(client => {
-    if (client.connectionId !== oid && client.readyState === WebSocket.OPEN) {
+    // sending to everyone besides sender
+    if(client.connectionId === connectionId){
+      return;
+    }
+    if (client.readyState === WebSocket.OPEN) {
       client.send(msg);
+    } else {
+      console.log(`skipping client ${client.connectionId}`)
     }
   });
   return true;
 };
 
-const broadcastAll = async(oid, action, msgObj = {}, event) => {
+const broadcastAll = async(connectionId, action, msgObj = {}) => {
+  console.log(`broadcast from ${connectionId}`);
   const msg = convertMsg(action, msgObj);
   socket.server.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(msg);
+    }  else {
+      console.log(`skipping client ${client.connectionId}`)
     }
   });
   return true;
 };
 
-const makeResponse = ws => {
-  return async (oid, action, msgObj = {}) => {
-    console.log(`Responding to ${oid} with: ${action}`);
-    const msg = convertMsg(action, msgObj);
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(msg);
-      return true;
-    }
-    return false;
-  };
-}
 
 const socket = {
   server: null,
@@ -123,25 +96,22 @@ const socket = {
     socket.server.on('connection', ws => {
       // connection information to hold in memory or persistently
       const connectionId = createOid();
-      const respond = makeResponse(ws);
       // Emulate connect event in api gateway
       const gwEvent = {
         requestContext: {
           connectionId,
-          respond,
         },
       };
       gatewayWs.connect(gwEvent);
       // handle incoming request
       ws.on('message', message => {
-        socket.incoming(message, respond, connectionId);
+        socket.incoming(message, connectionId);
       });
       ws.connectionId = connectionId;
       ws.on('close', code => {
         console.log(`Client closing with code ${code}`);
         gatewayWs.disconnect({
           ...gwEvent,
-          respond,
           sendTo,
           broadcast,
           broadcastAll,
@@ -161,7 +131,7 @@ const socket = {
     },
   ],
   // handle incoming socket messages
-  incoming: (event, respond, connectionId) => {
+  incoming: (event, connectionId) => {
     let req = { action: null };
     // if error we don't care there is a default object
     try {
@@ -182,7 +152,6 @@ const socket = {
         },
         // not an api gateway properties
         sendTo,
-        respond,
         broadcast,
         broadcastAll,
       });

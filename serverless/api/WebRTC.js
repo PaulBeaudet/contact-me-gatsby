@@ -14,8 +14,10 @@ const ice = async event => {
   if (!iceCandidates || !matchId) {
     return _400();
   }
-  const sent = await send(matchId, 'ice', { iceCandidates }, event);
-  return sent ? _200() : _400();
+  const {client, db} = await connectDB('socketPool');
+  await send(matchId, 'ice', { iceCandidates }, event, db);
+  client.close();
+  return _200();
 };
 
 // lambda for making WebRTC offers to another user
@@ -40,7 +42,7 @@ const offer = async event => {
   const { connectionId: guestId } = event.requestContext;
   // look up host id in db
   try {
-    const { collection, client } = await connectDB('users');
+    const { collection, client, db } = await connectDB('users');
     const findResult = await collection.findOne({
       email: process.env.HOST_EMAIL,
     });
@@ -59,10 +61,10 @@ const offer = async event => {
       return _400();
     }
     // Send this offer to the host from the guest
-    const sent = await send(hostId, 'offer', { sdp, matchId: guestId }, event);
+    await send(hostId, 'offer', { sdp, matchId: guestId }, event, db);
     console.log(`sent offer to ${hostId}`);
     client.close();
-    return sent ? _200() : _400();
+    return _200();
   } catch (error) {
     console.log(`Issue with offer: ${error}`);
   }
@@ -94,10 +96,10 @@ const answer = async event => {
     console.log('not host or something');
     return _200();
   }
-  const sent = await send(matchId, 'answer', { sdp, matchId: connectionId }, event);
-  const cast = await broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
+  await send(matchId, 'answer', { sdp, matchId: connectionId }, event, db);
+  await broadcastAll(connectionId, 'AVAIL', { avail: false }, event, db);
   client.close();
-  return sent && cast ? _200() : _400();
+  return _200();
 };
 
 module.exports = {

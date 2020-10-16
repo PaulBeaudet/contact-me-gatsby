@@ -39,6 +39,7 @@ const SetAvail = async event => {
     console.log('No params to modify');
     return _400();
   }
+  console.log(`Avail type = ${typeof avail}`);
   try {
     const { collection, client, db } = await connectDB('users');
     // keep in mind server only knows connectionId

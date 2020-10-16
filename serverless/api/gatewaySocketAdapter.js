@@ -36,34 +36,28 @@ let send = async (ConnectionId, action, jsonData, event, db) => {
 
 // ways to broadcast with a lambda functions
 let broadcast = async (ConnectionId, action, jsonData, event, db) => {
+  // For every participant in the socket pool 
+  const cursor = db.collection('socketPool').find({});
+  let doc;
   try {
-    // For every participant in the socket pool 
-    const cursor = db.collection('socketPool').find({});
-    await cursor.forEach(async client => {
-      if (client.connectionId === ConnectionId){return;} 
-      try {
-        await send(client.connectionId, action, jsonData, event, db);
-      } catch (error){
-        console.log(error);
-      }
-    })
-  } catch (error) {
+    while ((doc = await cursor.next())){
+      if(doc.connectionId === ConnectionId){continue;}
+      await send(doc.connectionId, action, jsonData, event, db);
+    }
+  } catch (error){
     console.log(error);
   }
 };
 
 let broadcastAll = async (ConnectionId, action, jsonData, event, db) => {
+  // For every participant in the socket pool 
+  const cursor = db.collection('socketPool').find({});
+  let doc;
   try {
-    // For every participant in the socket pool 
-    const cursor = db.collection('socketPool').find({});
-    await cursor.forEach(async client => {
-      try {
-        await send(client.connectionId, action, jsonData, event, db);
-      } catch (error){
-        console.log(error);
-      }
-    })
-  } catch (error) {
+    while ((doc = await cursor.next())){
+      await send(doc.connectionId, action, jsonData, event, db);
+    }
+  } catch (error){
     console.log(error);
   }
 };

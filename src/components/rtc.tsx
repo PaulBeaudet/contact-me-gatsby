@@ -191,7 +191,7 @@ const RTC: React.FC = () => {
       wsSend('EndCall');
       endCall();
       if(host){
-        setCallButtonState(hostAvail ? callState.here : callState.away);
+        setCallButtonState(hostAvail ? callState.away : callState.here);
       } else {
         setCallButtonState(callState.call);
       }

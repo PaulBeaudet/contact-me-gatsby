@@ -1,7 +1,15 @@
 // communication.ts Copyright 2020 Paul Beaudet MIT License
 // If env var for video is true set it that otherwise default false
-const useVideo: boolean =
-  process.env.GATSBY_USE_VIDEO === 'true' ? true : false;
+const videoState = {
+  width: 640,
+  height: 480,
+}
+const videoConstraints = {
+  ...videoState,
+  facingMode: "user",
+}
+const useVideo: any =
+  process.env.GATSBY_USE_VIDEO === 'true' ? videoConstraints : false;
 const mediaConfig = {
   audio: true,
   video: useVideo,
@@ -19,4 +27,4 @@ const offerConfig = {
   offerToReceiveVideo: mediaConfig.video,
 };
 
-export { configRTC, offerConfig, mediaConfig };
+export { configRTC, offerConfig, mediaConfig, videoState };

@@ -3,7 +3,7 @@
 import React, { useEffect, useContext, useState} from 'react';
 import { wsOn, wsSend } from '../api/WebSocket';
 import { GlobalUserContext } from '../context/GlobalState';
-import { mediaConfig, configRTC, offerConfig} from '../config/communication';
+import { configRTC, offerConfig, videoState} from '../config/communication';
 import { wsPayload } from '../interfaces/global';
 import { getStream } from '../api/media';
 
@@ -22,6 +22,7 @@ const RTC: React.FC = () => {
     'Set as Available',
     'Set Away',
   ]
+  const defaultVideoState = {width: 0, height: 0};
   const { state, dispatch } = useContext(GlobalUserContext);
   const [rtcPeer, setRtcPeer] = useState(null);
   const [matchId, setMatchId] = useState('');
@@ -29,8 +30,9 @@ const RTC: React.FC = () => {
   const [candidatesFound, setCandidatesFound] = useState(false);
   const [stream, setStream] = useState(null);
   const [descriptionRemote, setDescriptionRemote ] = useState(false);
-  const [remoteCandidates, setRemoteCandidates] = useState([])
-  const [callButtonState, setCallButtonState] = useState(callState.setup)
+  const [remoteCandidates, setRemoteCandidates] = useState([]);
+  const [callButtonState, setCallButtonState] = useState(callState.setup);
+  const [videoWindowState, setVideoWindowState] = useState(defaultVideoState);
   const { host, hostAvail, callInProgress } = state;
   
   // Remote ICE should only be added after a remote description is set
@@ -76,6 +78,7 @@ const RTC: React.FC = () => {
         });
         wsSend('answer', {sdp: answer, matchId: match})
         setCallButtonState(callState.end);
+        setVideoWindowState(videoState);
       } catch (error){
         console.log(`offer response error: ${error}`);
       }
@@ -130,7 +133,7 @@ const RTC: React.FC = () => {
     rtcObj.ontrack = (event) => {
       // Attach stream event to an html element <audio> or <video>
       if(typeof document !== 'undefined'){
-        const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
+        const element = document.getElementById('mediaStream') as HTMLVideoElement;
         element.srcObject = event.streams[0];
       }
     }
@@ -154,6 +157,7 @@ const RTC: React.FC = () => {
 
   const endCall = () => {
     rtcPeer.close();
+    setVideoWindowState(defaultVideoState);
     if(typeof document !== 'undefined'){
       const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
       element.srcObject = null;
@@ -184,6 +188,7 @@ const RTC: React.FC = () => {
       if (hostAvail && !callInProgress){
         connectCall();
         setCallButtonState(callState.end);
+        setVideoWindowState(videoState);
       } else {
         console.log('connect button should probably be disabled');
       }
@@ -211,13 +216,8 @@ const RTC: React.FC = () => {
       {showingRtcElements && <button onClick={callButtonSwitch} className="button">
         {callStateText[callButtonState]}
       </button>}
-      {!mediaConfig.video && showingRtcElements && (
-        <audio id="mediaStream" autoPlay={true} playsInline>
-          unsupported
-        </audio>
-      )}
-      {mediaConfig.video && showingRtcElements && (
-        <video id="mediaStream" autoPlay={true} playsInline>
+      {showingRtcElements && (
+        <video id="mediaStream" autoPlay={true} width={videoWindowState.height} height={videoWindowState.width} playsInline>
           unsupported
         </video>
       )}

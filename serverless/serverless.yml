@@ -12,7 +12,7 @@ provider:
   runtime: nodejs12.x
   region: us-east-1
   timeout: 3
-  memorySize: 256
+  memorySize: 3008
   environment:
     DM_WH: ${env:DM_WH}
     ENDPOINT_ROUTE: ${env:ENDPOINT_ROUTE}
@@ -22,9 +22,9 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - "execute-api:ManageConnections"
+        - 'execute-api:ManageConnections'
       Resource:
-        - "arn:aws:execute-api:*:*:**/@connections/*"
+        - 'arn:aws:execute-api:*:*:**/@connections/*'
 
 functions:
   connect:

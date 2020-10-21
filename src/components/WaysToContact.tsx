@@ -6,6 +6,7 @@ import { GlobalUserContext } from '../context/GlobalState';
 import RTC from './rtc';
 import { wsSend, wsOn } from '../api/WebSocket';
 import { wsPayload } from '../interfaces/global';
+import Footer from './footer';
 
 const WaysToContact = () => {
   const [showDm, setShowDm] = useState(true);
@@ -53,6 +54,7 @@ const WaysToContact = () => {
         {showDm ? 'Sign-in view': 'Message view'}
       </button>
       </>}
+      <Footer />
     </div>
   );
 };

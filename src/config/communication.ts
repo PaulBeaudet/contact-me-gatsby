@@ -3,11 +3,13 @@
 const videoState = {
   width: 640,
   height: 480,
-}
+};
+
 const videoConstraints = {
   ...videoState,
   facingMode: "user",
-}
+};
+
 const useVideo: any =
   process.env.GATSBY_USE_VIDEO === 'true' ? videoConstraints : false;
 const mediaConfig = {

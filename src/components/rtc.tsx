@@ -1,5 +1,4 @@
 // rtcClient.tsx Copyright 2020 Paul Beaudet MIT Licence
-// Working rtc component
 import React, { useEffect, useContext, useState} from 'react';
 import { wsOn, wsSend } from '../api/WebSocket';
 import { GlobalUserContext } from '../context/GlobalState';

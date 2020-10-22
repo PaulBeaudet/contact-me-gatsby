@@ -6,24 +6,7 @@ const WebSocket = require('ws');
 const yaml = require('js-yaml'); // read serverless.yml file
 const fs = require('fs'); // built in file system library
 const { startFresh } = require('./db/management');
-
-// similar logic to new mongo.ObjectID() except this just returns a string
-const createOid = () => {
-  const increment = Math.floor(Math.random() * 16777216).toString(16);
-  const pid = Math.floor(Math.random() * 65536).toString(16);
-  const machine = Math.floor(Math.random() * 16777216).toString(16);
-  const timestamp = Math.floor(new Date().valueOf() / 1000).toString(16);
-  return (
-    '00000000'.substr(0, 8 - timestamp.length) +
-    timestamp +
-    '000000'.substr(0, 6 - machine.length) +
-    machine +
-    '0000'.substr(0, 4 - pid.length) +
-    pid +
-    '000000'.substr(0, 6 - increment.length) +
-    increment
-  );
-};
+const { createOid } = require('../isomorphic/oid');
 
 // placeholder methods can be over written by serverless forFunctions
 const gatewayWs = {

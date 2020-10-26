@@ -216,9 +216,11 @@ const RTC: React.FC = () => {
         {callStateText[callButtonState]}
       </button>}
       {showingRtcElements && (
-        <video id="mediaStream" autoPlay={true} width={videoWindowState.height} height={videoWindowState.width} playsInline>
-          unsupported
-        </video>
+        <>
+          <video id="mediaStream" autoPlay={true} width={videoWindowState.height} height={videoWindowState.width} playsInline>
+            unsupported
+          </video>
+        </>
       )}
     </>
   );

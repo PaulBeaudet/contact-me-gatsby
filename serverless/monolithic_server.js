@@ -26,9 +26,11 @@ const convertMsg = (action, msgObj) => {
   return msg;
 };
 
+let wsServer = null;
+
 const sendTo = async (connectionId, action, msgObj = {}) => {
   const msg = convertMsg(action, msgObj);
-  socket.server.clients.forEach(client => {
+  wsServer.clients.forEach(client => {
     if (client.connectionId === connectionId && client.readyState === WebSocket.OPEN) {
       client.send(msg);
     }
@@ -41,7 +43,7 @@ const broadcast = async (connectionId, action, msgObj = {}) => {
   // TODO use db to keep track of monolith clients
   console.log(`broadcast from ${connectionId}`);
   const msg = convertMsg(action, msgObj);
-  socket.server.clients.forEach(client => {
+  wsServer.clients.forEach(client => {
     // sending to everyone besides sender
     if(client.connectionId === connectionId){
       return;
@@ -58,7 +60,7 @@ const broadcast = async (connectionId, action, msgObj = {}) => {
 const broadcastAll = async(connectionId, action, msgObj = {}) => {
   console.log(`broadcast from ${connectionId}`);
   const msg = convertMsg(action, msgObj);
-  socket.server.clients.forEach(client => {
+  wsServer.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(msg);
     }  else {
@@ -68,169 +70,165 @@ const broadcastAll = async(connectionId, action, msgObj = {}) => {
   return true;
 };
 
+const wsOn = (action, func) => {
+  wsHandlers.push({ action, func });
+};
 
-const socket = {
-  server: null,
-  init: server => {
-    socket.server = new WebSocket.Server({
-      server,
-      autoAcceptConnections: false, // is this a thing?
-    });
-    socket.server.on('connection', ws => {
-      // connection information to hold in memory or persistently
-      const connectionId = createOid();
-      // Emulate connect event in api gateway
-      const gwEvent = {
-        requestContext: {
-          connectionId,
-        },
-      };
-      gatewayWs.connect(gwEvent);
-      // handle incoming request
-      ws.on('message', message => {
-        socket.incoming(message, connectionId);
-      });
-      ws.connectionId = connectionId;
-      ws.on('close', code => {
-        console.log(`Client closing with code ${code}`);
-        gatewayWs.disconnect({
-          ...gwEvent,
-          sendTo,
-          broadcast,
-          broadcastAll,
-        });
-      });
-    });
-  },
-  on: (action, func) => {
-    socket.handlers.push({ action, func });
-  },
-  handlers: [
-    {
-      action: 'msg',
-      func: req => {
-        console.log(req.msg);
+const wsHandlers = [{
+  action: 'msg',
+  func: req => {
+    console.log(req.msg);
+  }
+}];
+
+// handle incoming socket messages
+const incoming = (event, connectionId) => {
+  let req = { action: null };
+  // if error we don't care there is a default object
+  try {
+    req = JSON.parse(event);
+  } catch (error) {
+    console.log(error);
+  }
+  // find handler we are looking for
+  const endpoint = wsHandlers.find(
+    handler => req.action === handler.action
+  );
+  if (endpoint) {
+    console.log(`endpoint = ${endpoint.action}`);
+    endpoint.func({
+      body: event,
+      requestContext: {
+        connectionId,
       },
-    },
-  ],
-  // handle incoming socket messages
-  incoming: (event, connectionId) => {
-    let req = { action: null };
-    // if error we don't care there is a default object
-    try {
-      req = JSON.parse(event);
-    } catch (error) {
-      console.log(error);
-    }
-    // find handler we are looking for
-    const endpoint = socket.handlers.find(
-      handler => req.action === handler.action
-    );
-    if (endpoint) {
-      console.log(`endpoint = ${endpoint.action}`);
-      endpoint.func({
-        body: event,
-        requestContext: {
-          connectionId,
-        },
-        // not an api gateway properties
+      // not an api gateway properties
+      sendTo,
+      broadcast,
+      broadcastAll,
+    });
+  } else {
+    console.log(`no handler: ${req.action}`);
+  }
+  if (req.message === 'Internal server error') {
+    console.log(`Server error: ${req.action}`);
+    return;
+  }
+};
+
+const initSocketServer = server => {
+  wsServer = new WebSocket.Server({
+    server,
+    autoAcceptConnections: false, // is this a thing?
+  });
+  wsServer.on('connection', ws => {
+    // connection information to hold in memory or persistently
+    const connectionId = createOid();
+    // Emulate connect event in api gateway
+    const gwEvent = {
+      requestContext: {
+        connectionId,
+      },
+    };
+    gatewayWs.connect(gwEvent);
+    // handle incoming request
+    ws.on('message', message => {
+      incoming(message, connectionId);
+    });
+    ws.connectionId = connectionId;
+    ws.on('close', code => {
+      console.log(`Client closing with code ${code}`);
+      gatewayWs.disconnect({
+        ...gwEvent,
         sendTo,
         broadcast,
         broadcastAll,
       });
-    } else {
-      console.log(`no handler: ${req.action}`);
-    }
-    if (req.message === 'Internal server error') {
-      console.log(`Server error: ${req.action}`);
+    });
+  });
+};
+
+const restHandlers = [{
+  path: 'msg',
+  type: 'post',
+  func: req => {
+    console.log(req.msg);
+  }
+}];
+
+const restOn = (path, func, type) => {
+  restHandlers.push({ path, func, type });
+};
+
+const restEndPointSetup = router => {
+  restHandlers.forEach(handler => {
+    router[handler.type](handler.path, (res, req) => {
+      const apiGWCallback = (firstArg, secondArg) => {
+        console.log(JSON.stringify(secondArg));
+      };
+      const apiGWEvent = {
+        body: req.body,
+      };
+      handler.func(apiGWEvent, {}, apiGWCallback);
+    });
+  });
+};
+
+const loadServiceConfig = onFinish => {
+  fs.readFile('serverless.yml', 'utf8', (err, data) => {
+    // pass env vars and call next thing to do
+    onFinish(yaml.safeLoad(data));
+  });
+}
+
+// function that sets up each service loaded from config
+const setService = router => {
+  return config => {
+    // validation exception
+    if (!config.functions) {
+      console.error('no functions');
       return;
     }
-  },
-};
-
-const api = {
-  handlers: [
-    {
-      path: 'msg',
-      type: 'post',
-      func: req => {
-        console.log(req.msg);
-      },
-    },
-  ],
-  on: (path, func, type) => {
-    socket.handlers.push({ path, func, type });
-  },
-  endPointSetup: router => {
-    api.handlers.forEach(handler => {
-      router[handler.type](handler.path, (res, req) => {
-        const apiGWCallback = (firstArg, secondArg) => {
-          console.log(JSON.stringify(secondArg));
-        };
-        const apiGWEvent = {
-          body: req.body,
-        };
-        handler.func(apiGWEvent, {}, apiGWCallback);
-      });
-    });
-  },
-};
-
-const serverless = {
-  read: onFinish => {
-    fs.readFile('serverless.yml', 'utf8', (err, data) => {
-      // pass env vars and call next thing to do
-      onFinish(yaml.safeLoad(data));
-    });
-  },
-  forFunctions: router => {
-    return config => {
-      // validation exception
-      if (!config.functions) {
-        console.error('no functions');
-        return;
+    // for every function entry in sls config file
+    Object.values(config.functions).forEach(entry => {
+      const handler = entry.handler.split('.');
+      // NOTE: Assumes function is a top level method on handler
+      const funcName = handler[1];
+      let mod = null;
+      try {
+        mod = require(path.join(__dirname, handler[0]));
+      } catch (error) {
+        console.error(error);
       }
-      // for every function entry in sls config file
-      Object.values(config.functions).forEach(entry => {
-        const handler = entry.handler.split('.');
-        // NOTE: Assumes function is a top level method on handler
-        const funcName = handler[1];
-        let mod = null;
-        try {
-          mod = require(path.join(__dirname, handler[0]));
-        } catch (error) {
-          console.error(error);
+      if ('websocket' in entry.events[0]) {
+        const route = entry.events[0].websocket.route;
+        // hook default apiGateway routes into server
+        if (route === '$connect') {
+          gatewayWs.connect = mod[funcName];
+        } else if (route === '$disconnect') {
+          gatewayWs.disconnect = mod[funcName];
+          // This is not the same as $disconnect which will be
+          // triggered by client without 'beforeunload' listener
+          // socket.on('disconnect', mod[funcName]);
+          // NOTE: if in memory connection management is desired
+          // add this "on" event for placeholder in init
+          // then figure how this event could replace it in handler array
+        } else if (route === '$default') {
+          gatewayWs.default = mod[funcName];
+        } else {
+          wsOn(route, mod[funcName]);
         }
-        if ('websocket' in entry.events[0]) {
-          const route = entry.events[0].websocket.route;
-          // hook default apiGateway routes into server
-          if (route === '$connect') {
-            gatewayWs.connect = mod[funcName];
-          } else if (route === '$disconnect') {
-            gatewayWs.disconnect = mod[funcName];
-            // This is not the same as $disconnect which will be
-            // triggered by client without 'beforeunload' listener
-            // socket.on('disconnect', mod[funcName]);
-            // NOTE: if in memory connection management is desired
-            // add this "on" event for placeholder in init
-            // then figure how this event could replace it in handler array
-          } else if (route === '$default') {
-            gatewayWs.default = mod[funcName];
-          } else {
-            socket.on(route, mod[funcName]);
-          }
-        } else if ('http' in entry.events[0]) {
-          api.on(
-            entry.events[0].http.path,
-            mod[funcName],
-            entry.events[0].http.method.toLowerCase()
-          );
-        }
-      });
-      api.endPointSetup(router);
-    };
-  },
+      } else if ('http' in entry.events[0]) {
+        restOn(
+          entry.events[0].http.path,
+          mod[funcName],
+          entry.events[0].http.method.toLowerCase()
+        );
+      }
+    });
+    restEndPointSetup(router);
+  };
 };
+
 
 const serve = () => {
   app.use(express.static(path.join(__dirname + '/../public/')));
@@ -240,10 +238,10 @@ const serve = () => {
     res.sendFile(path.join(__dirname + '/../public/index.html'));
   });
   // set up api event handlers
-  serverless.read(serverless.forFunctions(router));
+  loadServiceConfig(setService(router));
   app.use(router);
   const web_server = app.listen(process.env.PORT);
-  socket.init(web_server);
+  initSocketServer(web_server);
 };
 
 module.exports = serve;

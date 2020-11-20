@@ -22,6 +22,8 @@ const configRTC = {
     { urls: process.env.GATSBY_ICE_SERVER_1 },
     { urls: process.env.GATSBY_ICE_SERVER_2 },
   ],
+  // Chrome only flag to set unified-plan in case it would other wise decide plan-b is a good idea
+  sdpSemantics: 'unified-plan',
 };
 
 const offerConfig = {

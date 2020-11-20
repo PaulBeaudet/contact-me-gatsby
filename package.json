@@ -37,6 +37,7 @@
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
     "start": "./local_testing.sh",
     "serve": "./serve.sh",
+    "stop-server": "pm2 delete monolithic_server",
     "clean": "gatsby clean",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },

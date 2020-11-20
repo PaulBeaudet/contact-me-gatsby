@@ -110,11 +110,12 @@ const RTC: React.FC = () => {
         }
       })
     } else if (typeof RTCPeerConnection !== 'undefined'){
-      setRtcPeer(new RTCPeerConnection(configRTC));
+      const rtcObj = new RTCPeerConnection(configRTC);
+      setRtcPeer(rtcObj);
     }
   }, [rtcPeer]);
 
-  const setUpMedia = async (rtcObj) => {
+  const setUpMedia = async (rtcObj: RTCPeerConnection) => {
     let ourStream = stream;
     if(!ourStream){
       try {
@@ -176,7 +177,7 @@ const RTC: React.FC = () => {
 
   wsOn('EndCall', ()=> {
     endCall();
-    setCallButtonState(host ? callState.here: callState.call);
+    setCallButtonState(host ? callState.here : callState.call);
   });
 
   const callButtonSwitch = () => {

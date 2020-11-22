@@ -32,6 +32,7 @@ const RTC: React.FC = () => {
   const [remoteCandidates, setRemoteCandidates] = useState([]);
   const [callButtonState, setCallButtonState] = useState(callState.setup);
   const [videoWindowState, setVideoWindowState] = useState(defaultVideoState);
+  const [muted, setMuted ] = useState(false);
   const { host, hostAvail, callInProgress } = state;
   
   // Remote ICE should only be added after a remote description is set
@@ -120,6 +121,9 @@ const RTC: React.FC = () => {
     if(!ourStream){
       try {
         ourStream = await getStream();
+        ourStream.getAudioTracks().forEach(track => {
+          track.enabled = !muted;
+        });
         setStream(ourStream);
       } catch (error){
         console.log(error);
@@ -209,6 +213,15 @@ const RTC: React.FC = () => {
     }
   }
 
+  const muteToggle = () => {
+    if(stream){
+      stream.getAudioTracks().forEach(track => {
+        track.enabled = muted
+      });
+    }
+    setMuted(!muted);
+  }
+
   // show elements when host is available or call is in progress
   const showingRtcElements: boolean = hostAvail || callInProgress || host;
   return (
@@ -221,6 +234,9 @@ const RTC: React.FC = () => {
           <video id="mediaStream" autoPlay={true} width={videoWindowState.height} height={videoWindowState.width} playsInline>
             unsupported
           </video>
+          <button onClick={muteToggle} className="button">
+            {muted ? 'unmute' : 'mute'}
+          </button>
         </>
       )}
     </>

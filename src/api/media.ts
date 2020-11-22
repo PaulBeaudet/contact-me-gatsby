@@ -1,7 +1,7 @@
 // media.ts Copyright 2020 Paul Beaudet MIT License
 import { mediaConfig } from '../config/communication';
 
-const getStream = async (video = mediaConfig.video) => {
+const getStream = async (video = mediaConfig.video, secondTry = false) => {
   if (typeof navigator !== 'undefined') {
     try {
       // if we were passed a video option override it, other wise stick with default
@@ -9,16 +9,18 @@ const getStream = async (video = mediaConfig.video) => {
         ...mediaConfig,
         video,
       });
-      const audioTracks = stream.getAudioTracks();
-      if (!audioTracks.length) {
-        throw new Error(`No audio tracks!`);
+      if (!stream.getAudioTracks().length) {
+        throw new Error(`No audio tracks`);
       }
-      // make sure the client's microphone is actually on
-      audioTracks[0].enabled = audioTracks[0].enabled ? true : true;
       return stream;
     } catch (error) {
-      console.log(`issue getting media stream: ${error} trying without video`);
-      return getStream(false);
+      if (!secondTry && mediaConfig.video){
+        // try without video if there was no video device
+        console.log(`issue getting media stream: ${error} trying without video`);
+        return getStream(false, true);
+      }
+      console.log(`getStream => ${error}`);
+      return null
     }
   }
 };

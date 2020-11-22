@@ -2,7 +2,7 @@
 import React, { useEffect, useContext, useState} from 'react';
 import { wsOn, wsSend } from '../api/WebSocket';
 import { GlobalUserContext } from '../context/GlobalState';
-import { configRTC, offerConfig, videoState} from '../config/communication';
+import { configRTC, mediaConfig, offerConfig, videoState} from '../config/communication';
 import { wsPayload } from '../interfaces/global';
 import { getStream } from '../api/media';
 
@@ -33,6 +33,7 @@ const RTC: React.FC = () => {
   const [callButtonState, setCallButtonState] = useState(callState.setup);
   const [videoWindowState, setVideoWindowState] = useState(defaultVideoState);
   const [muted, setMuted ] = useState(false);
+  const [showVideo, setShowVideo ] = useState(mediaConfig.video);
   const { host, hostAvail, callInProgress } = state;
   
   // Remote ICE should only be added after a remote description is set
@@ -124,6 +125,11 @@ const RTC: React.FC = () => {
         ourStream.getAudioTracks().forEach(track => {
           track.enabled = !muted;
         });
+        if(mediaConfig.video){
+          ourStream.getVideoTracks().forEach(track => {
+            track.enabled = showVideo;
+          });
+        }
         setStream(ourStream);
       } catch (error){
         console.log(error);
@@ -222,6 +228,15 @@ const RTC: React.FC = () => {
     setMuted(!muted);
   }
 
+  const videoToggle = () => {
+    if(stream){
+      stream.getVideoTracks().forEach(track => {
+        track.enabled = !showVideo
+      });
+    }
+    setShowVideo(!showVideo);
+  }
+
   // show elements when host is available or call is in progress
   const showingRtcElements: boolean = hostAvail || callInProgress || host;
   return (
@@ -237,6 +252,9 @@ const RTC: React.FC = () => {
           <button onClick={muteToggle} className="button">
             {muted ? 'unmute' : 'mute'}
           </button>
+          {mediaConfig.video && <button onClick={videoToggle} className="button">
+            {showVideo ? 'hide video' : 'share video'}
+          </button>}
         </>
       )}
     </>

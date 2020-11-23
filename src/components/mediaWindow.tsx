@@ -41,7 +41,7 @@ const MediaWindow: React.FC<props> = ({videoWindowState, rtcObj, requestSetup}) 
     let ourStream = stream;
     if(!ourStream){
       try {
-        ourStream = await getStream();
+        ourStream = await getStream(showVideo);
         ourStream.getAudioTracks().forEach(track => {
           track.enabled = !muted;
         });

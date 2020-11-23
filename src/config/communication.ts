@@ -1,6 +1,13 @@
 // communication.ts Copyright 2020 Paul Beaudet MIT License
 // If env var for video is true set it that otherwise default false
-const videoState = {
+
+interface videoWindowSize {
+  width: number
+  height: number
+}
+
+// SD quality video is good enough, resources are better allocated towards audio
+const videoState: videoWindowSize = {
   width: 640,
   height: 480,
 };
@@ -12,6 +19,7 @@ const videoConstraints = {
 
 const useVideo: any =
   process.env.GATSBY_USE_VIDEO === 'true' ? videoConstraints : false;
+
 const mediaConfig = {
   audio: true,
   video: useVideo,
@@ -31,4 +39,4 @@ const offerConfig = {
   offerToReceiveVideo: mediaConfig.video,
 };
 
-export { configRTC, offerConfig, mediaConfig, videoState };
+export { configRTC, offerConfig, mediaConfig, videoState, videoWindowSize };

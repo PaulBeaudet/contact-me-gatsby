@@ -1,12 +1,12 @@
-// rtcClient.tsx Copyright 2020 Paul Beaudet MIT Licence
+// rtcCall.tsx Copyright 2020 Paul Beaudet MIT Licence
 import React, { useEffect, useContext, useState} from 'react';
 import { wsOn, wsSend } from '../api/WebSocket';
 import { GlobalUserContext } from '../context/GlobalState';
-import { configRTC, mediaConfig, offerConfig, videoState} from '../config/communication';
+import { configRTC, offerConfig, videoState} from '../config/communication';
 import { wsPayload } from '../interfaces/global';
-import { getStream } from '../api/media';
+import MediaWindow from './mediaWindow';
 
-const RTC: React.FC = () => {
+const RTCCall: React.FC = () => {
   enum callState {
     setup,
     call,
@@ -27,13 +27,11 @@ const RTC: React.FC = () => {
   const [matchId, setMatchId] = useState('');
   const [iceCandidates, setIceCandidates] = useState([]);
   const [candidatesFound, setCandidatesFound] = useState(false);
-  const [stream, setStream] = useState(null);
   const [descriptionRemote, setDescriptionRemote ] = useState(false);
   const [remoteCandidates, setRemoteCandidates] = useState([]);
   const [callButtonState, setCallButtonState] = useState(callState.setup);
   const [videoWindowState, setVideoWindowState] = useState(defaultVideoState);
-  const [muted, setMuted ] = useState(false);
-  const [showVideo, setShowVideo ] = useState(mediaConfig.video);
+  const [requestSetup, setRequestSetup] = useState(0);
   const { host, hostAvail, callInProgress } = state;
   
   // Remote ICE should only be added after a remote description is set
@@ -117,38 +115,6 @@ const RTC: React.FC = () => {
     }
   }, [rtcPeer]);
 
-  const setUpMedia = async (rtcObj: RTCPeerConnection) => {
-    let ourStream = stream;
-    if(!ourStream){
-      try {
-        ourStream = await getStream();
-        ourStream.getAudioTracks().forEach(track => {
-          track.enabled = !muted;
-        });
-        if(mediaConfig.video){
-          ourStream.getVideoTracks().forEach(track => {
-            track.enabled = showVideo;
-          });
-        }
-        setStream(ourStream);
-      } catch (error){
-        console.log(error);
-        return;
-      }
-    }
-    ourStream.getTracks().forEach(track => {
-      rtcObj.addTrack(track, ourStream);
-    });
-    // On track needs to be called after getTracks or no candidates will be generated
-    rtcObj.ontrack = (event) => {
-      // Attach stream event to an html element <audio> or <video>
-      if(typeof document !== 'undefined'){
-        const element = document.getElementById('mediaStream') as HTMLVideoElement;
-        element.srcObject = event.streams[0];
-      }
-    }
-  };
-
   const connectCall = async () => {
     try {
       const description = await rtcPeer.createOffer(offerConfig);
@@ -180,7 +146,7 @@ const RTC: React.FC = () => {
     });
     if (typeof RTCPeerConnection !== 'undefined'){
       const newRtc = new RTCPeerConnection(configRTC);
-      setUpMedia(newRtc);
+      setRequestSetup(requestSetup + 1);
       setRtcPeer(newRtc);
     }
   }
@@ -192,7 +158,7 @@ const RTC: React.FC = () => {
 
   const callButtonSwitch = () => {
     if(callButtonState === callState.setup){
-      setUpMedia(rtcPeer);
+      setRequestSetup(requestSetup + 1);
       setCallButtonState(host ? callState.here : callState.call);
     } else if (callButtonState === callState.call){
       if (hostAvail && !callInProgress){
@@ -219,24 +185,6 @@ const RTC: React.FC = () => {
     }
   }
 
-  const muteToggle = () => {
-    if(stream){
-      stream.getAudioTracks().forEach(track => {
-        track.enabled = muted
-      });
-    }
-    setMuted(!muted);
-  }
-
-  const videoToggle = () => {
-    if(stream){
-      stream.getVideoTracks().forEach(track => {
-        track.enabled = !showVideo
-      });
-    }
-    setShowVideo(!showVideo);
-  }
-
   // show elements when host is available or call is in progress
   const showingRtcElements: boolean = hostAvail || callInProgress || host;
   return (
@@ -245,20 +193,10 @@ const RTC: React.FC = () => {
         {callStateText[callButtonState]}
       </button>}
       {showingRtcElements && (
-        <>
-          <video id="mediaStream" autoPlay={true} width={videoWindowState.height} height={videoWindowState.width} playsInline>
-            unsupported
-          </video>
-          <button onClick={muteToggle} className="button">
-            {muted ? 'unmute' : 'mute'}
-          </button>
-          {mediaConfig.video && <button onClick={videoToggle} className="button">
-            {showVideo ? 'hide video' : 'share video'}
-          </button>}
-        </>
+        <MediaWindow rtcObj={rtcPeer} videoWindowState={videoWindowState} requestSetup={requestSetup}/>
       )}
     </>
   );
 }; // end of RTC function
 
-export default RTC;
+export default RTCCall;

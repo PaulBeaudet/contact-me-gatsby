@@ -1,5 +1,5 @@
 #!/bin/bash
-. ./personal.sh # Load private configuration
+. ./prod_config.sh # Load private configuration
 
 # Build static website
 gatsby clean

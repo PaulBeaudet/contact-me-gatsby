@@ -71,6 +71,7 @@ yarn-error.log
 .serverless
 .netlify
 personal.sh
+prod_config.sh
 .vscode
 bucket_policy.json
 distribution-config.json

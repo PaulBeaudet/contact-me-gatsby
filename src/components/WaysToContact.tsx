@@ -3,10 +3,10 @@ import React, { useContext, useEffect, useState } from 'react';
 import Dm from './dm';
 import Authenticate from './authenticate';
 import { GlobalUserContext } from '../context/GlobalState';
-import RTC from './rtc';
 import { wsSend, wsOn } from '../api/WebSocket';
 import { wsPayload } from '../interfaces/global';
 import Footer from './footer';
+import RTCCall from './rtcCall';
 
 const WaysToContact = () => {
   const [showDm, setShowDm] = useState(true);
@@ -40,7 +40,7 @@ const WaysToContact = () => {
             : 'BUSY: Please leave a message'}
         </span>
       </h1>
-      <RTC />
+      <RTCCall />
       {!loggedIn && hostAvail && <p> - or message - </p>}
       {dmShowing && <Dm />}
       {showAuth && <Authenticate />}

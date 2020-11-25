@@ -145,9 +145,8 @@ const RTCCall: React.FC = () => {
       },
     });
     if (typeof RTCPeerConnection !== 'undefined'){
-      const newRtc = new RTCPeerConnection(configRTC);
+      setRtcPeer(new RTCPeerConnection(configRTC));
       setRequestSetup(requestSetup + 1);
-      setRtcPeer(newRtc);
     }
   }
 

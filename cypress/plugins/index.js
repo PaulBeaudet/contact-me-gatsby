@@ -16,6 +16,16 @@
  * @type {Cypress.PluginConfig}
  */
 module.exports = (on, config) => {
-  // `on` is used to hook into various events Cypress emits
-  // `config` is the resolved Cypress config
+  "use strict";
+
+  on('before:browser:launch', function (browser = {}, args) {
+
+    if (browser.name === 'chrome') {
+      args.push('--use-fake-ui-for-media-stream');
+      args.push('--use-fake-device-for-media-stream');
+      // args.push('--use-file-for-fake-audio-capture=cypress/fixtures/2020-11-25-083037.webm');
+    }
+
+    return args;
+  });
 }

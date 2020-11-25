@@ -135,7 +135,7 @@ const RTCCall: React.FC = () => {
     rtcPeer.close();
     setVideoWindowState(defaultVideoState);
     if(typeof document !== 'undefined'){
-      const element = document.getElementById('mediaStream') as HTMLVideoElement | HTMLAudioElement;
+      const element = document.getElementById('remoteStream') as HTMLVideoElement | HTMLAudioElement;
       element.srcObject = null;
     }
     dispatch({

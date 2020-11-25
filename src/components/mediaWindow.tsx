@@ -35,6 +35,7 @@ const getStream = async (video = mediaConfig.video, secondTry = false) => {
 const MediaWindow: React.FC<props> = ({videoWindowState, rtcObj, requestSetup}) => {
   const [stream, setStream] = useState(null);
   const [muted, setMuted ] = useState(false);
+  const [introspection, setIntrospection] = useState(false);
   const [showVideo, setShowVideo ] = useState(mediaConfig.video);
 
   const setUpMedia = async (rtcObj: RTCPeerConnection) => {
@@ -58,12 +59,17 @@ const MediaWindow: React.FC<props> = ({videoWindowState, rtcObj, requestSetup}) 
     }
     ourStream.getTracks().forEach((track: MediaStreamTrack) => {
       rtcObj.addTrack(track, ourStream);
+      if(typeof document !== 'undefined'){
+        const element = document.getElementById('localStream') as HTMLVideoElement;
+        element.srcObject = ourStream;
+        setIntrospection(true);
+      }
     });
     // On track needs to be called after getTracks or no candidates will be generated
     rtcObj.ontrack = (event: RTCTrackEvent) => {
       // Attach stream event to an html video element
       if(typeof document !== 'undefined'){
-        const element = document.getElementById('mediaStream') as HTMLVideoElement;
+        const element = document.getElementById('remoteStream') as HTMLVideoElement;
         element.srcObject = event.streams[0];
       }
     }
@@ -99,11 +105,21 @@ const MediaWindow: React.FC<props> = ({videoWindowState, rtcObj, requestSetup}) 
   return (
     <>
       <video 
-        id="mediaStream"
-        autoPlay={true}
+        id="remoteStream"
+        autoPlay
         width={videoWindowState.height}
         height={videoWindowState.width}
         playsInline
+      >
+        unsupported
+      </video>
+      <video 
+        id="localStream"
+        autoPlay
+        width={introspection ? 120 : 0}
+        height={introspection ? 160 : 0}
+        playsInline
+        muted
       >
         unsupported
       </video>

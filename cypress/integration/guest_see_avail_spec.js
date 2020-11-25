@@ -1,4 +1,4 @@
-// change_availability_spec.js Copyright 2020 Paul Beaudet MIT License
+// guest_see_avail_spec.js Copyright 2020 Paul Beaudet MIT License
 // Is the host for this page able to change availability?
 /// <reference types="cypress" />
 

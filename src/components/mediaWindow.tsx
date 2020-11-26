@@ -1,6 +1,6 @@
 // mediaWindow.tsx Copyright 2020 Paul Beaudet MIT License
 import React, { useState, useEffect } from 'react';
-import {  mediaConfig, videoWindowSize } from '../config/communication';
+import { mediaConfig, videoWindowSize } from '../config/communication';
 
 interface props {
   videoWindowState: videoWindowSize
@@ -8,37 +8,13 @@ interface props {
   requestSetup: number
 }
 
-const getStream = async (video = mediaConfig.video, secondTry = false) => {
-  if (typeof navigator !== 'undefined') {
-    try {
-      // if we were passed a video option override it, other wise stick with default
-      const stream = await navigator.mediaDevices.getUserMedia({
-        ...mediaConfig,
-        video,
-      });
-      if (!stream.getAudioTracks().length) {
-        throw new Error(`No audio tracks`);
-      }
-      return stream;
-    } catch (error) {
-      if (!secondTry && mediaConfig.video){
-        // try without video if there was no video device
-        console.log(`issue getting media stream: ${error} trying without video`);
-        return getStream(false, true);
-      }
-      console.log(`getStream => ${error}`);
-      return null
-    }
-  }
-};
-
 const MediaWindow: React.FC<props> = ({videoWindowState, rtcObj, requestSetup}) => {
   const [stream, setStream] = useState(null);
   const [muted, setMuted ] = useState(false);
   const [introspection, setIntrospection] = useState(false);
-  const [showVideo, setShowVideo ] = useState(mediaConfig.video);
+  const [showVideo, setShowVideo ] = useState(mediaConfig.video ? true : false);
 
-  const setUpMedia = async (rtcObj: RTCPeerConnection) => {
+  const setUpMedia = async () => {
     let ourStream = stream;
     if(!ourStream){
       try {
@@ -80,9 +56,33 @@ const MediaWindow: React.FC<props> = ({videoWindowState, rtcObj, requestSetup}) 
       return;
     }
     if(requestSetup){
-      setUpMedia(rtcObj);
+      setUpMedia();
     }
   }, [requestSetup]);
+
+  const getStream = async (video = mediaConfig.video, secondTry = false) => {
+    if (typeof navigator !== 'undefined') {
+      try {
+        // if we were passed a video option override it, other wise stick with default
+        const stream = await navigator.mediaDevices.getUserMedia({
+          ...mediaConfig,
+          video,
+        });
+        if (!stream.getAudioTracks().length) {
+          throw new Error(`No audio tracks`);
+        }
+        return stream;
+      } catch (error) {
+        if (!secondTry && mediaConfig.video){
+          // try without video if there was no video device
+          console.log(`issue getting media stream: ${error} trying without video`);
+          return getStream(false, true);
+        }
+        console.log(`getStream => ${error}`);
+        return null
+      }
+    }
+  };
 
   const muteToggle = () => {
     if(stream){

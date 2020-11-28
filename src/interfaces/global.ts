@@ -3,8 +3,6 @@ export interface siteMetadata {
     title: string;
     author: string;
     description: string;
-    contact_api: string;
-    contact_redirect: Location;
   };
 }
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-. ./personal.sh
+. ./dev_config.sh
 
 # overwrite env vars for local testing
 # LOCAL_LAN_IP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
@@ -9,5 +9,6 @@
 gatsby clean
 gatsby build
 
-# set server up to test things out
-./serve.sh
+# startup server
+cd serverless/
+npm start

@@ -1,7 +1,7 @@
 {
   "name": "contact_service",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Collection of websocket endpoints to negotiate contact service connections",
   "main": "monolithic_server.js",
   "scripts": {

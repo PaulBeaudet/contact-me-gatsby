@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ./personal.sh
+. ./dev_config.sh
 # Not that being set at all equals true
 export CYPRESS_guest="TRUE"
 

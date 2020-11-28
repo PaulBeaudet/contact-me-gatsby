@@ -34,13 +34,11 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "./build.sh",
     "develop": "gatsby develop",
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
-    "start": "./local_testing.sh",
-    "serve": "./serve.sh",
-    "stop-server": "pm2 delete monolithic_server",
+    "start": "./build.sh",
     "clean": "gatsby clean",
+    "install-globals": "npm install -g pm2 gatsby-cli serverless",
     "cypress": ". ./build.sh && npx cypress open",
     "cypress-depends": "sudo apt-get install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb"
   },

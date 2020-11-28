@@ -34,5 +34,5 @@ echo "done syncing"
 
 # deploy sereverless functions assosiated with this app
 cd serverless/
-serverless deploy --aws-profile deabute
+serverless deploy --aws-profile $AIM_PROFILE
 echo "Done deploying serverless functions"

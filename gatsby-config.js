@@ -1,10 +1,8 @@
 module.exports = {
   siteMetadata: {
-    title: process.env.SITE_TITLE,
-    description: process.env.DESCRIPTION,
-    author: process.env.SITE_AUTHOR,
-    contact_api: process.env.CONTACT_API_URL,
-    contact_redirect: process.env.AFTER_CONTACT_REDIRECT,
+    title: process.env.GATSBY_SITE_TITLE,
+    description: process.env.GATSBY_DESCRIPTION,
+    author: process.env.GATSBY_SITE_AUTHOR,
   },
   plugins: [
     `gatsby-plugin-react-helmet`,

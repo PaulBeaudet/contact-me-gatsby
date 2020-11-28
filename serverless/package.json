@@ -5,7 +5,11 @@
   "description": "Collection of websocket endpoints to negotiate contact service connections",
   "main": "monolithic_server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "stop": "pm2 delete monolithic_server",
+    "start": "pm2 start monolithic_server.js --watch",
+    "logs": "pm2 logs monolithic_server --timestamp --lines 30",
+    "clear-logs": "pm2 flush"
   },
   "author": "Paul Beaudet",
   "license": "MIT",
@@ -24,5 +28,6 @@
   },
   "bugs": {
     "url": "https://github.com/PaulBeaudet/contact-me-gatsby/issues"
-  }
+  },
+  "devDependencies": {}
 }

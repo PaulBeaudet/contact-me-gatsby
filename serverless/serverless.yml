@@ -12,7 +12,7 @@ provider:
   runtime: nodejs12.x
   region: us-east-1
   timeout: 3
-  memorySize: 3008
+  memorySize: 4016
   environment:
     DM_WH: ${env:DM_WH}
     ENDPOINT_ROUTE: ${env:ENDPOINT_ROUTE}

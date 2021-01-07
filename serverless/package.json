@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "stop": "pm2 delete monolithic_server",
-    "start": "pm2 start monolithic_server.js --watch",
+    "start": "./serve.sh",
+    "startup": "pm2 start monolithic_server.js --watch",
     "logs": "pm2 logs monolithic_server --timestamp --lines 30",
     "clear-logs": "pm2 flush"
   },

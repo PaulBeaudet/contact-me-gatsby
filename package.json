@@ -2,7 +2,7 @@
   "name": "contact-me",
   "private": true,
   "description": "Landing page for contacting the host of the website",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "author": "Paul Beaudet",
   "dependencies": {
     "gatsby": "^2.30.1",

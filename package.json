@@ -5,8 +5,7 @@
   "version": "1.0.20",
   "author": "Paul Beaudet",
   "dependencies": {
-    "gatsby": "^2.27.0",
-    "gatsby-cli": "^2.12.50",
+    "gatsby": "^2.30.1",
     "gatsby-plugin-manifest": "^2.4.5",
     "gatsby-plugin-offline": "^3.2.3",
     "gatsby-plugin-react-helmet": "^3.3.1",
@@ -27,6 +26,7 @@
     "eslint": "^7.9.0",
     "eslint-plugin-cypress": "^2.11.2",
     "eslint-plugin-react": "^7.20.6",
+    "gatsby-cli": "^2.17.0",
     "prettier": "^2.1.2"
   },
   "keywords": [
@@ -34,11 +34,12 @@
   ],
   "license": "MIT",
   "scripts": {
-    "develop": "gatsby develop",
+    "develop": "npx gatsby develop",
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
     "start": "./build.sh",
-    "clean": "gatsby clean",
-    "install-globals": "npm install -g pm2 gatsby-cli serverless",
+    "clean": "npx gatsby clean",
+    "serve": "cd serverless/ && npm start",
+    "install-globals": "npm install -g pm2 serverless",
     "cypress": ". ./build.sh && npx cypress open",
     "cypress-depends": "sudo apt-get install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb"
   },
